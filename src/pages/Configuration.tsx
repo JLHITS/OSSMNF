@@ -132,8 +132,18 @@ export function Configuration() {
 
       // Upload photo if a new one was selected
       if (photoFile) {
-        const tempId = editingPlayerId || 'new';
-        photoUrl = await uploadPlayerPhoto(tempId, photoFile);
+        try {
+          const tempId = editingPlayerId || 'new';
+          photoUrl = await uploadPlayerPhoto(tempId, photoFile);
+        } catch (uploadErr) {
+          console.warn('Photo upload failed (CORS or storage issue), using placeholder:', uploadErr);
+          // Continue without photo - will use placeholder
+          photoUrl = '';
+          setAlertMessage({
+            message: 'Photo upload not available. Player saved with placeholder image.',
+            type: 'info'
+          });
+        }
       }
 
       const playerData = {

@@ -63,6 +63,10 @@ export function Play() {
       if (newSet.has(playerId)) {
         newSet.delete(playerId);
       } else {
+        // Don't allow selecting more than required players
+        if (newSet.size >= requiredPlayers) {
+          return newSet;
+        }
         newSet.add(playerId);
       }
       return newSet;
@@ -70,7 +74,9 @@ export function Play() {
   };
 
   const selectAll = () => {
-    setSelectedPlayerIds(new Set(players.map((p) => p.id)));
+    // Only select up to the required number of players
+    const playerIds = players.slice(0, requiredPlayers).map((p) => p.id);
+    setSelectedPlayerIds(new Set(playerIds));
   };
 
   const clearSelection = () => {
@@ -81,8 +87,8 @@ export function Play() {
     setError(null);
     const selectedPlayers = players.filter((p) => selectedPlayerIds.has(p.id));
 
-    if (selectedPlayers.length < requiredPlayers) {
-      setError(`Need at least ${requiredPlayers} players for ${matchSize}. Selected: ${selectedPlayers.length}`);
+    if (selectedPlayers.length !== requiredPlayers) {
+      setError(`Need exactly ${requiredPlayers} players for ${matchSize}. Selected: ${selectedPlayers.length}`);
       return;
     }
 
@@ -260,8 +266,7 @@ export function Play() {
                   <input
                     type="checkbox"
                     checked={selectedPlayerIds.has(player.id)}
-                    onChange={() => {}}
-                    onClick={(e) => e.stopPropagation()}
+                    onChange={() => togglePlayer(player.id)}
                   />
                 </div>
               </div>
@@ -278,7 +283,7 @@ export function Play() {
 
           <button
             onClick={handleGenerateTeams}
-            disabled={selectedPlayerIds.size < requiredPlayers}
+            disabled={selectedPlayerIds.size !== requiredPlayers}
             className="btn btn-primary generate-btn"
           >
             Generate Teams
