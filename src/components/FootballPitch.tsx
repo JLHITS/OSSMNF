@@ -50,7 +50,7 @@ function PlayerCard({ player, team, showRatings, isSelected, onSelect }: PlayerC
         )}
         {isSelected && (
           <span className="swap-indicator" title="Selected to swap">
-            SWAP
+            ↺
           </span>
         )}
       </div>
