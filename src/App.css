@@ -1378,12 +1378,36 @@ h1, h2, h3 {
   border-radius: 50%;
   overflow: hidden;
   border: 3px solid var(--border-light);
+  position: relative;
 }
 
 .photo-preview img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.photo-remove-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #ef4444;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.photo-remove-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 .photo-upload-btn {

@@ -86,6 +86,12 @@ export function Configuration() {
     }
   };
 
+  const handleRemovePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    setFormData((prev) => ({ ...prev, photoUrl: '' }));
+  };
+
   const handleEditPlayer = (player: Player) => {
     setEditingPlayerId(player.id);
     setFormAnchorPlayerId(player.id);
@@ -270,6 +276,16 @@ export function Configuration() {
                   (e.target as HTMLImageElement).src = placeholder;
                 }}
               />
+              { (photoPreview || formData.photoUrl) && (
+                <button
+                  type="button"
+                  className="photo-remove-btn"
+                  title="Remove photo"
+                  onClick={handleRemovePhoto}
+                >
+                  &minus;
+                </button>
+              )}
             </div>
             <label className="photo-upload-btn">
               Upload Photo

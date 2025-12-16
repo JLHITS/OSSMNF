@@ -14,6 +14,7 @@ export function Results() {
   const [editWhiteScore, setEditWhiteScore] = useState<string>('');
   const [editRedScorers, setEditRedScorers] = useState<string[]>([]);
   const [editWhiteScorers, setEditWhiteScorers] = useState<string[]>([]);
+  const [editDate, setEditDate] = useState<string>('');
   const [alertMessage, setAlertMessage] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
@@ -27,6 +28,7 @@ export function Results() {
     setEditWhiteScore(match.whiteScore?.toString() || '');
     setEditRedScorers(match.redScorers || []);
     setEditWhiteScorers(match.whiteScorers || []);
+    setEditDate(new Date(match.date).toISOString().split('T')[0]);
   };
 
   const cancelEditing = () => {
@@ -35,18 +37,21 @@ export function Results() {
     setEditWhiteScore('');
     setEditRedScorers([]);
     setEditWhiteScorers([]);
+    setEditDate('');
   };
 
-  const saveResult = async (matchId: string) => {
+  const saveResult = async (match: Match) => {
     const redScore = editRedScore ? parseInt(editRedScore, 10) : null;
     const whiteScore = editWhiteScore ? parseInt(editWhiteScore, 10) : null;
+    const newDate = editDate ? new Date(editDate) : new Date(match.date);
 
     try {
-      await updateMatch(matchId, {
+      await updateMatch(match.id, {
         redScore,
         whiteScore,
         redScorers: editRedScorers,
         whiteScorers: editWhiteScorers,
+        date: newDate,
         status: redScore !== null && whiteScore !== null ? 'completed' : 'pending',
       });
       await refreshMatches();
@@ -217,6 +222,14 @@ export function Results() {
                     <div className="result-editor">
                       <div className="score-inputs">
                         <div className="score-input-group">
+                          <label>Date:</label>
+                          <input
+                            type="date"
+                            value={editDate}
+                            onChange={(e) => setEditDate(e.target.value)}
+                          />
+                        </div>
+                        <div className="score-input-group">
                           <label>Red Score:</label>
                           <input
                             type="number"
@@ -319,7 +332,7 @@ export function Results() {
                       </div>
 
                       <div className="editor-actions">
-                        <button onClick={() => saveResult(match.id)} className="btn btn-primary">
+                        <button onClick={() => saveResult(match)} className="btn btn-primary">
                           Save Result
                         </button>
                         <button onClick={cancelEditing} className="btn btn-secondary">
