@@ -4,7 +4,7 @@ export interface Player {
   id: string;
   name: string;
   photoUrl: string;
-  fitness: number; // 1-10
+  fitness: number; // Work Rate: 1-10
   defence: number; // 1-10
   attack: number; // 1-10
   ballUse: number; // 1-10

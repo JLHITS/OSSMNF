@@ -2,6 +2,7 @@ import { useState, type Dispatch, type SetStateAction } from 'react';
 import { useData } from '../context/DataContext';
 import type { Match } from '../types';
 import { updateMatch, deleteMatch } from '../services/firebase';
+import { Alert, Confirm } from '../components/Modal';
 import placeholder from '../assets/placeholder.png';
 
 export function Results() {
@@ -12,6 +13,8 @@ export function Results() {
   const [editWhiteScore, setEditWhiteScore] = useState<string>('');
   const [editRedScorers, setEditRedScorers] = useState<string[]>([]);
   const [editWhiteScorers, setEditWhiteScorers] = useState<string[]>([]);
+  const [alertMessage, setAlertMessage] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const toggleExpand = (matchId: string) => {
     setExpandedMatchId(expandedMatchId === matchId ? null : matchId);
@@ -49,19 +52,25 @@ export function Results() {
       cancelEditing();
     } catch (err) {
       console.error('Error saving result:', err);
-      alert('Failed to save result');
+      setAlertMessage({ message: 'Failed to save result', type: 'error' });
     }
   };
 
-  const handleDeleteMatch = async (matchId: string) => {
-    if (!confirm('Are you sure you want to delete this match?')) return;
+  const handleDeleteMatch = (matchId: string) => {
+    setConfirmDelete(matchId);
+  };
+
+  const confirmDeleteMatch = async () => {
+    if (!confirmDelete) return;
 
     try {
-      await deleteMatch(matchId);
+      await deleteMatch(confirmDelete);
       await refreshMatches();
     } catch (err) {
       console.error('Error deleting match:', err);
-      alert('Failed to delete match');
+      setAlertMessage({ message: 'Failed to delete match', type: 'error' });
+    } finally {
+      setConfirmDelete(null);
     }
   };
 
@@ -321,6 +330,28 @@ export function Results() {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Modals */}
+      {alertMessage && (
+        <Alert
+          isOpen={true}
+          onClose={() => setAlertMessage(null)}
+          message={alertMessage.message}
+          type={alertMessage.type}
+        />
+      )}
+
+      {confirmDelete && (
+        <Confirm
+          isOpen={true}
+          onClose={() => setConfirmDelete(null)}
+          onConfirm={confirmDeleteMatch}
+          title="Delete Match"
+          message="Are you sure you want to delete this match? This action cannot be undone."
+          confirmText="Delete"
+          type="error"
+        />
       )}
     </div>
   );

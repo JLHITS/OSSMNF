@@ -3,6 +3,7 @@ import { useData } from '../context/DataContext';
 import type { Player, Position } from '../types';
 import { createPlayer, updatePlayer, deletePlayer, uploadPlayerPhoto } from '../services/firebase';
 import { calculateOVR } from '../utils/calculations';
+import { Alert, Confirm } from '../components/Modal';
 import placeholder from '../assets/placeholder.png';
 
 interface PlayerFormData {
@@ -25,6 +26,9 @@ const initialFormData: PlayerFormData = {
   photoUrl: '',
 };
 
+type SortField = 'ovr' | 'workRate' | 'attack' | 'defence' | 'ballUse' | 'name';
+type SortOrder = 'asc' | 'desc';
+
 export function Configuration() {
   const { players, refreshPlayers } = useData();
   const [showForm, setShowForm] = useState(false);
@@ -34,6 +38,11 @@ export function Configuration() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sortField, setSortField] = useState<SortField>('ovr');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [groupByPosition, setGroupByPosition] = useState(false);
+  const [alertMessage, setAlertMessage] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ playerId: string; playerName: string } | null>(null);
 
   const calculatedOVR = calculateOVR(
     formData.fitness,
@@ -89,15 +98,21 @@ export function Configuration() {
     setShowForm(true);
   };
 
-  const handleDeletePlayer = async (playerId: string) => {
-    if (!confirm('Are you sure you want to delete this player?')) return;
+  const handleDeletePlayer = (player: Player) => {
+    setConfirmDelete({ playerId: player.id, playerName: player.name });
+  };
+
+  const confirmDeletePlayer = async () => {
+    if (!confirmDelete) return;
 
     try {
-      await deletePlayer(playerId);
+      await deletePlayer(confirmDelete.playerId);
       await refreshPlayers();
     } catch (err) {
       console.error('Error deleting player:', err);
-      alert('Failed to delete player');
+      setAlertMessage({ message: 'Failed to delete player', type: 'error' });
+    } finally {
+      setConfirmDelete(null);
     }
   };
 
@@ -156,6 +171,65 @@ export function Configuration() {
     };
     return labels[position];
   };
+
+  // Sort and group players
+  const getSortedPlayers = () => {
+    let sortedPlayers = [...players];
+
+    // Sort by selected field
+    sortedPlayers.sort((a, b) => {
+      let aValue: number | string;
+      let bValue: number | string;
+
+      switch (sortField) {
+        case 'ovr':
+          aValue = a.ovr;
+          bValue = b.ovr;
+          break;
+        case 'workRate':
+          aValue = a.fitness;
+          bValue = b.fitness;
+          break;
+        case 'attack':
+          aValue = a.attack;
+          bValue = b.attack;
+          break;
+        case 'defence':
+          aValue = a.defence;
+          bValue = b.defence;
+          break;
+        case 'ballUse':
+          aValue = a.ballUse;
+          bValue = b.ballUse;
+          break;
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        default:
+          aValue = a.ovr;
+          bValue = b.ovr;
+      }
+
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+      } else {
+        return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+      }
+    });
+
+    if (groupByPosition) {
+      // Group by position: DEF, ATT, ALR
+      const defenders = sortedPlayers.filter(p => p.position === 'DEF');
+      const attackers = sortedPlayers.filter(p => p.position === 'ATT');
+      const allRounders = sortedPlayers.filter(p => p.position === 'ALR');
+      return [...defenders, ...attackers, ...allRounders];
+    }
+
+    return sortedPlayers;
+  };
+
+  const displayedPlayers = getSortedPlayers();
 
   return (
     <div className="config-page">
@@ -229,7 +303,7 @@ export function Configuration() {
               <div className="ratings-grid">
                 <div className="rating-input">
                   <label htmlFor="fitness">
-                    Fitness <span className="weight">(35%)</span>
+                    Work Rate <span className="weight">(35%)</span>
                   </label>
                   <input
                     type="range"
@@ -318,11 +392,55 @@ export function Configuration() {
 
       <div className="players-list">
         <h2>Players ({players.length})</h2>
+
+        {players.length > 0 && (
+          <div className="players-sort-controls">
+            <div className="sort-control-group">
+              <label htmlFor="sortField">Sort by:</label>
+              <select
+                id="sortField"
+                value={sortField}
+                onChange={(e) => setSortField(e.target.value as SortField)}
+              >
+                <option value="ovr">OVR</option>
+                <option value="workRate">Work Rate</option>
+                <option value="attack">Attack</option>
+                <option value="defence">Defence</option>
+                <option value="ballUse">Ball Use</option>
+                <option value="name">Name</option>
+              </select>
+            </div>
+
+            <div className="sort-control-group">
+              <label htmlFor="sortOrder">Order:</label>
+              <select
+                id="sortOrder"
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+              >
+                <option value="desc">Highest to Lowest</option>
+                <option value="asc">Lowest to Highest</option>
+              </select>
+            </div>
+
+            <div className="sort-control-group">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={groupByPosition}
+                  onChange={(e) => setGroupByPosition(e.target.checked)}
+                />
+                <span>Group by Position</span>
+              </label>
+            </div>
+          </div>
+        )}
+
         {players.length === 0 ? (
           <p className="no-players">No players added yet. Add your first player above.</p>
         ) : (
           <div className="players-grid">
-            {players.map((player) => (
+            {displayedPlayers.map((player) => (
               <div key={player.id} className="player-card-config">
                 <img
                   src={player.photoUrl || placeholder}
@@ -336,7 +454,7 @@ export function Configuration() {
                   <h3>{player.name}</h3>
                   <p className="player-position">{getPositionLabel(player.position)}</p>
                   <div className="player-ratings">
-                    <span>FIT: {player.fitness}</span>
+                    <span>WR: {player.fitness}</span>
                     <span>DEF: {player.defence}</span>
                     <span>ATT: {player.attack}</span>
                     <span>BU: {player.ballUse}</span>
@@ -348,7 +466,7 @@ export function Configuration() {
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDeletePlayer(player.id)}
+                    onClick={() => handleDeletePlayer(player)}
                     className="btn btn-small btn-danger"
                   >
                     Delete
@@ -359,6 +477,28 @@ export function Configuration() {
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      {alertMessage && (
+        <Alert
+          isOpen={true}
+          onClose={() => setAlertMessage(null)}
+          message={alertMessage.message}
+          type={alertMessage.type}
+        />
+      )}
+
+      {confirmDelete && (
+        <Confirm
+          isOpen={true}
+          onClose={() => setConfirmDelete(null)}
+          onConfirm={confirmDeletePlayer}
+          title="Delete Player"
+          message={`Are you sure you want to delete ${confirmDelete.playerName}? This action cannot be undone.`}
+          confirmText="Delete"
+          type="error"
+        />
+      )}
     </div>
   );
 }

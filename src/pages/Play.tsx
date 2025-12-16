@@ -1,22 +1,58 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import { useData } from '../context/DataContext';
 import { FootballPitch } from '../components/FootballPitch';
+import { Alert } from '../components/Modal';
 import type { TeamPlayer, MatchSize } from '../types';
 import { generateBalancedTeams, getTeamSize, calculateTeamOVR } from '../utils/calculations';
 import { createMatch } from '../services/firebase';
 import placeholder from '../assets/placeholder.png';
 
+// Helper functions for localStorage
+const loadTeamsFromStorage = (): { redTeam: TeamPlayer[]; whiteTeam: TeamPlayer[]; matchSize: MatchSize } => {
+  try {
+    const saved = localStorage.getItem('ossmnf_current_teams');
+    if (saved) {
+      const data = JSON.parse(saved);
+      return {
+        redTeam: data.redTeam || [],
+        whiteTeam: data.whiteTeam || [],
+        matchSize: data.matchSize || '8v8',
+      };
+    }
+  } catch (err) {
+    console.error('Error loading teams from storage:', err);
+  }
+  return { redTeam: [], whiteTeam: [], matchSize: '8v8' };
+};
+
+const saveTeamsToStorage = (redTeam: TeamPlayer[], whiteTeam: TeamPlayer[], matchSize: MatchSize) => {
+  try {
+    localStorage.setItem('ossmnf_current_teams', JSON.stringify({ redTeam, whiteTeam, matchSize }));
+  } catch (err) {
+    console.error('Error saving teams to storage:', err);
+  }
+};
+
 export function Play() {
   const { players, refreshMatches } = useData();
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<Set<string>>(new Set());
-  const [matchSize, setMatchSize] = useState<MatchSize>('8v8');
-  const [redTeam, setRedTeam] = useState<TeamPlayer[]>([]);
-  const [whiteTeam, setWhiteTeam] = useState<TeamPlayer[]>([]);
-  const [teamsGenerated, setTeamsGenerated] = useState(false);
+
+  // Initialize from localStorage
+  const initialState = loadTeamsFromStorage();
+  const [matchSize, setMatchSize] = useState<MatchSize>(initialState.matchSize);
+  const [redTeam, setRedTeam] = useState<TeamPlayer[]>(initialState.redTeam);
+  const [whiteTeam, setWhiteTeam] = useState<TeamPlayer[]>(initialState.whiteTeam);
+  const [teamsGenerated, setTeamsGenerated] = useState(initialState.redTeam.length > 0 && initialState.whiteTeam.length > 0);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const pitchRef = useRef<HTMLDivElement>(null);
+  const [alertMessage, setAlertMessage] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  // Save to localStorage whenever teams or matchSize changes
+  useEffect(() => {
+    saveTeamsToStorage(redTeam, whiteTeam, matchSize);
+  }, [redTeam, whiteTeam, matchSize]);
 
   const teamSize = getTeamSize(matchSize);
   const requiredPlayers = teamSize * 2;
@@ -103,10 +139,10 @@ export function Play() {
         status: 'pending',
       });
       await refreshMatches();
-      alert('Match saved successfully!');
+      setAlertMessage({ message: 'Match saved successfully!', type: 'success' });
     } catch (err) {
       console.error('Error saving match:', err);
-      alert('Failed to save match');
+      setAlertMessage({ message: 'Failed to save match', type: 'error' });
     } finally {
       setSaving(false);
     }
@@ -126,7 +162,7 @@ export function Play() {
       link.click();
     } catch (err) {
       console.error('Error generating PNG:', err);
-      alert('Failed to generate image');
+      setAlertMessage({ message: 'Failed to generate image', type: 'error' });
     }
   };
 
@@ -163,6 +199,7 @@ export function Play() {
     setTeamsGenerated(false);
     setRedTeam([]);
     setWhiteTeam([]);
+    localStorage.removeItem('ossmnf_current_teams');
   };
 
   return (
@@ -280,6 +317,16 @@ export function Play() {
             Drag players between teams to swap. Click "Make C" to assign captain.
           </p>
         </div>
+      )}
+
+      {/* Modals */}
+      {alertMessage && (
+        <Alert
+          isOpen={true}
+          onClose={() => setAlertMessage(null)}
+          message={alertMessage.message}
+          type={alertMessage.type}
+        />
       )}
     </div>
   );
