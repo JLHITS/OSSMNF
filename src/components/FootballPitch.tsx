@@ -38,6 +38,7 @@ function PlayerCard({ player, team, showRatings, isSelected, onSelect }: PlayerC
           src={player.photoUrl ? getCloudinaryImageUrl(player.photoUrl) : placeholder}
           alt={player.name}
           className="player-photo"
+          crossOrigin="anonymous"
           onError={(e) => {
             (e.target as HTMLImageElement).src = placeholder;
           }}

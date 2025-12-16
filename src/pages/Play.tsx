@@ -163,6 +163,8 @@ export function Play() {
       const canvas = await html2canvas(pitchRef.current, {
         backgroundColor: '#1a472a',
         scale: 2,
+        useCORS: true,
+        allowTaint: false,
       });
       const link = document.createElement('a');
       link.download = `ossmnf-teams-${new Date().toISOString().split('T')[0]}.png`;
@@ -181,6 +183,8 @@ export function Play() {
       const canvas = await html2canvas(pitchRef.current, {
         backgroundColor: '#1a472a',
         scale: 2,
+        useCORS: true,
+        allowTaint: false,
       });
       canvas.toBlob(async (blob) => {
         if (!blob) return;
