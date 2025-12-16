@@ -562,6 +562,14 @@ ${whiteList}`;
                   className={`player-select-card ${selectedPlayerIds.has(player.id) ? 'selected' : ''} status-card-${getPlayerStatus(player.id)}`}
                   onClick={() => togglePlayer(player.id)}
                 >
+                  <div className="player-select-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={selectedPlayerIds.has(player.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={() => togglePlayer(player.id)}
+                    />
+                  </div>
                   <img
                     src={player.photoUrl ? getCloudinaryImageUrl(player.photoUrl) : placeholder}
                     alt={player.name}
@@ -572,19 +580,8 @@ ${whiteList}`;
                   />
                   <div className="player-select-info">
                     <span className="player-select-name">{player.name}</span>
-                    <span className="player-select-details">
-                      {player.position} | OVR: {player.ovr}
-                    </span>
-                  </div>
-                  <div className="player-card-actions">
-                    {renderStatusSelect(player.id)}
-                    <div className="player-select-checkbox">
-                      <input
-                        type="checkbox"
-                        checked={selectedPlayerIds.has(player.id)}
-                        onChange={() => togglePlayer(player.id)}
-                      />
-                    </div>
+                    <span className="player-select-details">{player.position}</span>
+                    <div className="player-select-status">{renderStatusSelect(player.id)}</div>
                   </div>
                 </div>
               ))}

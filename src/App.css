@@ -362,7 +362,7 @@ h1, h2, h3 {
 
 .player-select-card {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   padding: 10px 12px;
   background: var(--bg-white);
@@ -370,6 +370,7 @@ h1, h2, h3 {
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s;
+  position: relative;
 }
 
 .player-select-card:hover {
@@ -387,13 +388,14 @@ h1, h2, h3 {
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid var(--border-light);
+  flex-shrink: 0;
 }
 
 .player-select-info {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .player-select-name {
@@ -408,10 +410,24 @@ h1, h2, h3 {
   color: var(--text-light);
 }
 
+.player-select-status {
+  margin-top: 2px;
+}
+
+.player-select-status .status-select {
+  width: 100%;
+}
+
 .player-select-checkbox input {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   accent-color: var(--primary-green);
+}
+
+.player-select-checkbox {
+  position: absolute;
+  top: 8px;
+  right: 8px;
 }
 
 .generate-btn {
