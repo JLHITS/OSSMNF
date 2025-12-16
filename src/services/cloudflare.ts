@@ -7,7 +7,7 @@ const CLOUDFLARE_API_TOKEN = import.meta.env.VITE_CLOUDFLARE_API_TOKEN;
 const CLOUDFLARE_ACCOUNT_HASH = import.meta.env.VITE_CLOUDFLARE_ACCOUNT_HASH;
 
 /**
- * Upload an image to Cloudflare Images
+ * Upload an image to Cloudflare Images via our API proxy
  * @param file - The image file to upload
  * @param playerId - The player ID (used as metadata)
  * @returns The image ID from Cloudflare
@@ -16,29 +16,20 @@ export async function uploadImageToCloudflare(
   file: File,
   playerId: string
 ): Promise<string> {
-  if (!CLOUDFLARE_ACCOUNT_ID || !CLOUDFLARE_API_TOKEN) {
-    throw new Error('Cloudflare credentials not configured');
-  }
-
   const formData = new FormData();
   formData.append('file', file);
   formData.append('metadata', JSON.stringify({ playerId }));
 
-  const response = await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/images/v1`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
-      },
-      body: formData,
-    }
-  );
+  // Use our API proxy to avoid CORS issues
+  const response = await fetch('/api/upload-image', {
+    method: 'POST',
+    body: formData,
+  });
 
   if (!response.ok) {
     const error = await response.json();
-    console.error('Cloudflare upload error:', error);
-    throw new Error(`Failed to upload image: ${error.errors?.[0]?.message || 'Unknown error'}`);
+    console.error('Image upload error:', error);
+    throw new Error(`Failed to upload image: ${error.error || 'Unknown error'}`);
   }
 
   const data = await response.json();
