@@ -2317,6 +2317,55 @@ h1, h2, h3 {
   color: white;
 }
 
+.status-select {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  min-width: 120px;
+}
+
+.status-select.status-in {
+  border-color: #22c55e;
+  background: #ecfdf3;
+}
+
+.status-select.status-out {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.status-select.status-unconfirmed {
+  border-color: #9ca3af;
+  background: #f3f4f6;
+}
+
+.reserve-promote-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--accent-gold);
+  background: white;
+  color: var(--primary-green);
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.reserve-promote-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
 /* Status-based card styling */
 .status-card-in {
   border-left: 4px solid #22c55e;

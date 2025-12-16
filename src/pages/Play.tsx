@@ -110,34 +110,26 @@ export function Play() {
     return { inPlayers, outPlayers, waitingPlayers };
   }, [players, availability]);
 
-  // Toggle player availability status
-  const togglePlayerStatus = async (playerId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const currentStatus = getPlayerStatus(playerId);
+  // Set player availability via dropdown (instead of cycling button)
+  const handleStatusChange = async (playerId: string, newStatus: AvailabilityStatus) => {
     const currentAvail = availability.get(playerId);
+    const currentReserveOrder = currentAvail?.reserveOrder ?? null;
+    let updatedReserveOrder = currentReserveOrder;
 
-    let newStatus: AvailabilityStatus;
-    if (currentStatus === 'unconfirmed') newStatus = 'in';
-    else if (currentStatus === 'in') newStatus = 'out';
-    else newStatus = 'unconfirmed';
-
-    // Handle auto-promotion/demotion
-    let newReserveOrder = currentAvail?.reserveOrder ?? null;
-
-    if (newStatus === 'out' && newReserveOrder === null) {
+    if (newStatus === 'out' && currentReserveOrder === null) {
       // Demote to reserves - find next available order
       const maxOrder = Math.max(0, ...Array.from(availability.values())
         .filter((a) => a.reserveOrder !== null)
         .map((a) => a.reserveOrder!));
-      newReserveOrder = maxOrder + 1;
-    } else if (newStatus === 'in' && newReserveOrder !== null) {
+      updatedReserveOrder = maxOrder + 1;
+    } else if (newStatus === 'in' && currentReserveOrder !== null) {
       // Promote from reserves
-      newReserveOrder = null;
+      updatedReserveOrder = null;
       // Reorder remaining reserves
       await reorderReservesAfterPromotion(playerId);
     }
 
-    await updateAvailability([{ playerId, status: newStatus, reserveOrder: newReserveOrder }]);
+    await updateAvailability([{ playerId, status: newStatus, reserveOrder: updatedReserveOrder }]);
   };
 
   // Reorder reserves after a player is promoted
@@ -176,6 +168,17 @@ export function Play() {
       }
       setSelectedReserveId(null);
     }
+  };
+
+  // Promote a reserve back into the squad without changing their status
+  const promoteReserveToSquad = async (playerId: string) => {
+    const currentAvail = availability.get(playerId);
+    if (!currentAvail || currentAvail.reserveOrder === null) return;
+
+    // Reorder remaining reserves after removing this player
+    await reorderReservesAfterPromotion(playerId);
+    await updateAvailability([{ playerId, status: currentAvail.status, reserveOrder: null }]);
+    setSelectedReserveId((prev) => (prev === playerId ? null : prev));
   };
 
   // Select last 16 from most recent match
@@ -452,17 +455,21 @@ ${whiteList}`;
     localStorage.removeItem('ossmnf_current_teams');
   };
 
-  // Render status badge
-  const renderStatusBadge = (playerId: string) => {
+  // Render status dropdown for explicit selection
+  const renderStatusSelect = (playerId: string) => {
     const status = getPlayerStatus(playerId);
     return (
-      <button
-        className={`status-badge status-${status}`}
-        onClick={(e) => togglePlayerStatus(playerId, e)}
-        title={`Status: ${status.toUpperCase()} - Click to change`}
+      <select
+        className={`status-select status-${status}`}
+        value={status}
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onChange={(e) => handleStatusChange(playerId, e.target.value as AvailabilityStatus)}
       >
-        {status === 'in' ? '✓' : status === 'out' ? '✗' : '?'}
-      </button>
+        <option value="in">In</option>
+        <option value="out">Out</option>
+        <option value="unconfirmed">Unconfirmed</option>
+      </select>
     );
   };
 
@@ -570,7 +577,7 @@ ${whiteList}`;
                     </span>
                   </div>
                   <div className="player-card-actions">
-                    {renderStatusBadge(player.id)}
+                    {renderStatusSelect(player.id)}
                     <div className="player-select-checkbox">
                       <input
                         type="checkbox"
@@ -590,7 +597,7 @@ ${whiteList}`;
               <h3 className="squad-section-title">
                 Reserves ({reserves.length}/{RESERVE_POOL_SIZE})
               </h3>
-              <p className="reserve-hint">Tap to select, tap another to swap order</p>
+              <p className="reserve-hint">Tap to select/swap order. Use + to move back into the squad without changing status.</p>
               <div className="reserves-grid">
                 {reserves.map((player, index) => (
                   <div
@@ -598,6 +605,16 @@ ${whiteList}`;
                     className={`reserve-card ${selectedReserveId === player.id ? 'reserve-selected' : ''} status-card-${getPlayerStatus(player.id)}`}
                     onClick={() => handleReserveClick(player.id)}
                   >
+                    <button
+                      className="reserve-promote-btn"
+                      title="Move to squad without changing status"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        promoteReserveToSquad(player.id);
+                      }}
+                    >
+                      +
+                    </button>
                     <div className="reserve-order">{index + 1}</div>
                     <img
                       src={player.photoUrl ? getCloudinaryImageUrl(player.photoUrl) : placeholder}
@@ -611,7 +628,7 @@ ${whiteList}`;
                       <span className="reserve-name">{player.name}</span>
                       <span className="reserve-details">{player.position}</span>
                     </div>
-                    {renderStatusBadge(player.id)}
+                    {renderStatusSelect(player.id)}
                   </div>
                 ))}
               </div>
