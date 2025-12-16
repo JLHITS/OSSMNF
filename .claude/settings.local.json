@@ -9,7 +9,8 @@
       "Bash(ls:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Initial OssMNF app v0.0.1\n\n- Password-protected Monday Night Football manager\n- Player management with OVR calculations (Fitness, Defence, Attack, Ball Use)\n- Position modifiers (DEF, ATT, ALR)\n- Team generation algorithm for balanced 5v5 to 9v9 matches\n- Football pitch visualization with drag-and-drop\n- Captain selection with visual badges\n- Results tracking with optional scorers\n- Stats leaderboard (Win %, W/L/D, Goals)\n- PNG download and WhatsApp sharing\n- Modern light theme with soccer styling\n- Firebase Firestore for data persistence\nEOF\n)\")",
       "Bash(git push:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(cat:*)"
     ]
   }
 }

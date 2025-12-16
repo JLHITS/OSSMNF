@@ -2134,7 +2134,7 @@ h1, h2, h3 {
 /* Reserves grid */
 .reserves-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 12px;
 }
 
@@ -2193,12 +2193,11 @@ h1, h2, h3 {
 }
 
 .reserve-name {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: #1f2937;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
+  line-height: 1.2;
 }
 
 .reserve-details {
