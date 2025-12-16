@@ -17,12 +17,13 @@ import {
   deleteObject,
 } from 'firebase/storage';
 import { db, storage } from '../config/firebase';
-import type { Player, Match, TeamPlayer } from '../types';
+import type { Player, Match, TeamPlayer, PlayerAvailability, AvailabilityStatus } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
-// Players Collection
+// Collections
 const PLAYERS_COLLECTION = 'players';
 const MATCHES_COLLECTION = 'matches';
+const AVAILABILITY_COLLECTION = 'availability';
 
 export async function getPlayers(): Promise<Player[]> {
   const q = query(collection(db, PLAYERS_COLLECTION), orderBy('name'));
@@ -234,4 +235,76 @@ export function calculatePlayerStats(
     });
 
   return stats;
+}
+
+// Availability Collection
+export async function getAvailability(): Promise<PlayerAvailability[]> {
+  const snapshot = await getDocs(collection(db, AVAILABILITY_COLLECTION));
+  return snapshot.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      playerId: doc.id,
+      status: data.status || 'unconfirmed',
+      reserveOrder: data.reserveOrder ?? null,
+      updatedAt: data.updatedAt?.toDate() || new Date(),
+    } as PlayerAvailability;
+  });
+}
+
+export async function updatePlayerAvailability(
+  playerId: string,
+  status: AvailabilityStatus,
+  reserveOrder: number | null = null
+): Promise<void> {
+  const docRef = doc(db, AVAILABILITY_COLLECTION, playerId);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    await updateDoc(docRef, {
+      status,
+      reserveOrder,
+      updatedAt: Timestamp.now(),
+    });
+  } else {
+    // Use setDoc with merge to create if doesn't exist
+    const { setDoc } = await import('firebase/firestore');
+    await setDoc(docRef, {
+      status,
+      reserveOrder,
+      updatedAt: Timestamp.now(),
+    });
+  }
+}
+
+export async function batchUpdateAvailability(
+  updates: Array<{ playerId: string; status: AvailabilityStatus; reserveOrder: number | null }>
+): Promise<void> {
+  const { writeBatch } = await import('firebase/firestore');
+  const batch = writeBatch(db);
+
+  for (const update of updates) {
+    const docRef = doc(db, AVAILABILITY_COLLECTION, update.playerId);
+    batch.set(docRef, {
+      status: update.status,
+      reserveOrder: update.reserveOrder,
+      updatedAt: Timestamp.now(),
+    });
+  }
+
+  await batch.commit();
+}
+
+export async function resetAllAvailability(): Promise<void> {
+  const snapshot = await getDocs(collection(db, AVAILABILITY_COLLECTION));
+  const { writeBatch } = await import('firebase/firestore');
+  const batch = writeBatch(db);
+
+  snapshot.docs.forEach((docSnapshot) => {
+    batch.update(docSnapshot.ref, {
+      status: 'unconfirmed',
+      updatedAt: Timestamp.now(),
+    });
+  });
+
+  await batch.commit();
 }

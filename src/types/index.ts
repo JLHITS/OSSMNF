@@ -72,3 +72,13 @@ export interface AppState {
   players: Player[];
   matches: Match[];
 }
+
+// Availability tracking for reserve management
+export type AvailabilityStatus = 'in' | 'out' | 'unconfirmed';
+
+export interface PlayerAvailability {
+  playerId: string;
+  status: AvailabilityStatus;
+  reserveOrder: number | null; // 1-8 for reserves, null for playing squad
+  updatedAt: Date;
+}

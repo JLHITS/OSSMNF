@@ -2100,3 +2100,202 @@ h1, h2, h3 {
     gap: 1px;
   }
 }
+
+/* ===== Reserve Pool & Availability Status Styles ===== */
+
+/* Squad sections */
+.squad-section {
+  margin-bottom: 24px;
+}
+
+.squad-section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--primary-green);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--primary-green);
+}
+
+.reserves-section {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 12px;
+  margin-top: 24px;
+}
+
+.reserve-hint {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-bottom: 12px;
+  font-style: italic;
+}
+
+/* Reserves grid */
+.reserves-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.reserve-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.reserve-card:hover {
+  border-color: var(--accent-gold);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.reserve-card.reserve-selected {
+  border-color: var(--accent-gold);
+  background: #fef3c7;
+  box-shadow: 0 0 0 2px var(--accent-gold);
+}
+
+.reserve-order {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: var(--primary-green);
+  color: white;
+  font-weight: 700;
+  font-size: 0.75rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.reserve-photo {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.reserve-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.reserve-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reserve-details {
+  font-size: 0.7rem;
+  color: #6b7280;
+}
+
+/* Status badges */
+.status-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.status-badge:hover {
+  transform: scale(1.1);
+}
+
+.status-in {
+  background: #22c55e;
+  color: white;
+}
+
+.status-out {
+  background: #ef4444;
+  color: white;
+}
+
+.status-unconfirmed {
+  background: #9ca3af;
+  color: white;
+}
+
+/* Status-based card styling */
+.status-card-in {
+  border-left: 4px solid #22c55e;
+}
+
+.status-card-out {
+  border-left: 4px solid #ef4444;
+  opacity: 0.7;
+}
+
+.status-card-unconfirmed {
+  border-left: 4px solid #9ca3af;
+}
+
+/* Player card actions (status + checkbox) */
+.player-card-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Mobile adjustments for reserve pool */
+@media (max-width: 768px) {
+  .reserves-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .reserve-card {
+    padding: 8px;
+    gap: 6px;
+  }
+
+  .reserve-order {
+    width: 20px;
+    height: 20px;
+    font-size: 0.65rem;
+  }
+
+  .reserve-photo {
+    width: 30px;
+    height: 30px;
+  }
+
+  .reserve-name {
+    font-size: 0.75rem;
+  }
+
+  .status-badge {
+    width: 22px;
+    height: 22px;
+    font-size: 0.7rem;
+  }
+
+  .player-selection-actions {
+    flex-wrap: wrap;
+  }
+}
