@@ -2101,6 +2101,83 @@ h1, h2, h3 {
   }
 }
 
+/* ===== Availability Summary ===== */
+.availability-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  box-shadow: 0 6px 18px var(--shadow-light);
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.availability-counts {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.availability-pill {
+  min-width: 140px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafb;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.availability-pill.in {
+  border-color: #22c55e;
+  background: #ecfdf3;
+}
+
+.availability-pill.out {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.availability-pill.waiting {
+  border-color: #9ca3af;
+  background: #f3f4f6;
+}
+
+.pill-label {
+  font-size: 0.78rem;
+  color: #4b5563;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.pill-value {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: var(--text-dark);
+  line-height: 1.1;
+}
+
+.availability-share-btn {
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .availability-summary {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .availability-share-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
 /* ===== Reserve Pool & Availability Status Styles ===== */
 
 /* Squad sections */

@@ -95,6 +95,21 @@ export function Play() {
     return availability.get(playerId)?.status || 'unconfirmed';
   };
 
+  const availabilitySummary = useMemo(() => {
+    const inPlayers: Player[] = [];
+    const outPlayers: Player[] = [];
+    const waitingPlayers: Player[] = [];
+
+    players.forEach((player) => {
+      const status = availability.get(player.id)?.status || 'unconfirmed';
+      if (status === 'in') inPlayers.push(player);
+      else if (status === 'out') outPlayers.push(player);
+      else waitingPlayers.push(player);
+    });
+
+    return { inPlayers, outPlayers, waitingPlayers };
+  }, [players, availability]);
+
   // Toggle player availability status
   const togglePlayerStatus = async (playerId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -393,6 +408,21 @@ ${redList}
 ${whiteList}`;
   };
 
+  const generateWhatsAppAvailability = (): string => {
+    const formatSection = (title: string, list: Player[], emoji: string) => {
+      const lines = list.length > 0
+        ? list.map((player) => `${emoji} ${player.name}`).join('\n')
+        : `${emoji} None yet`;
+      return `${title}\n${lines}`;
+    };
+
+    const confirmedIn = formatSection('Confirmed in:', availabilitySummary.inPlayers, '✅');
+    const confirmedOut = formatSection('Confirmed out:', availabilitySummary.outPlayers, '❌');
+    const pending = formatSection('Still waiting on:', availabilitySummary.waitingPlayers, '⬜️');
+
+    return `${confirmedIn}\n\n${confirmedOut}\n\n${pending}`;
+  };
+
   const handleCopyWhatsApp = async () => {
     const text = generateWhatsAppLineup();
     try {
@@ -401,6 +431,17 @@ ${whiteList}`;
     } catch (err) {
       console.error('Error copying to clipboard:', err);
       setAlertMessage({ message: 'Failed to copy', type: 'error' });
+    }
+  };
+
+  const handleCopyAvailabilityWhatsApp = async () => {
+    const text = generateWhatsAppAvailability();
+    try {
+      await navigator.clipboard.writeText(text);
+      setAlertMessage({ message: 'Availability copied to clipboard!', type: 'success' });
+    } catch (err) {
+      console.error('Error copying availability message:', err);
+      setAlertMessage({ message: 'Failed to copy availability', type: 'error' });
     }
   };
 
@@ -428,6 +469,30 @@ ${whiteList}`;
   return (
     <div className="play-page">
       <h1>Generate Teams</h1>
+
+      <div className="availability-summary">
+        <div className="availability-counts">
+          <div className="availability-pill in">
+            <span className="pill-label">Confirmed IN</span>
+            <span className="pill-value">{availabilitySummary.inPlayers.length}</span>
+          </div>
+          <div className="availability-pill out">
+            <span className="pill-label">Confirmed OUT</span>
+            <span className="pill-value">{availabilitySummary.outPlayers.length}</span>
+          </div>
+          <div className="availability-pill waiting">
+            <span className="pill-label">Waiting</span>
+            <span className="pill-value">{availabilitySummary.waitingPlayers.length}</span>
+          </div>
+        </div>
+        <button
+          onClick={handleCopyAvailabilityWhatsApp}
+          className="btn btn-secondary availability-share-btn"
+          data-emoji="✅❌"
+        >
+          Copy availability for WhatsApp
+        </button>
+      </div>
 
       {!teamsGenerated ? (
         <div className="team-setup">
