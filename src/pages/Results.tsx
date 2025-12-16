@@ -115,6 +115,74 @@ export function Results() {
     return scorers.filter((id) => id === playerId).length;
   };
 
+  const generateWhatsAppResult = (match: Match): string => {
+    const matchDate = new Date(match.date).toLocaleDateString('en-GB', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+
+    let result = `⚽ MNF Results - ${matchDate}\n\n`;
+
+    if (match.status === 'completed' && match.redScore !== null && match.whiteScore !== null) {
+      result += `🔴 Red ${match.redScore} - ${match.whiteScore} White ⚪\n`;
+
+      // Add scorers if any
+      const redGoals = match.redScorers.length;
+      const whiteGoals = match.whiteScorers.length;
+
+      if (redGoals > 0 || whiteGoals > 0) {
+        result += '\n⚽ Scorers:\n';
+
+        if (redGoals > 0) {
+          const redScorerCounts: Record<string, number> = {};
+          match.redScorers.forEach((id) => {
+            redScorerCounts[id] = (redScorerCounts[id] || 0) + 1;
+          });
+          const redScorerNames = Object.entries(redScorerCounts)
+            .map(([id, count]) => {
+              const player = match.redTeam.find((p) => p.id === id);
+              return player ? (count > 1 ? `${player.name} (${count})` : player.name) : '';
+            })
+            .filter(Boolean)
+            .join(', ');
+          result += `🔴 ${redScorerNames}\n`;
+        }
+
+        if (whiteGoals > 0) {
+          const whiteScorerCounts: Record<string, number> = {};
+          match.whiteScorers.forEach((id) => {
+            whiteScorerCounts[id] = (whiteScorerCounts[id] || 0) + 1;
+          });
+          const whiteScorerNames = Object.entries(whiteScorerCounts)
+            .map(([id, count]) => {
+              const player = match.whiteTeam.find((p) => p.id === id);
+              return player ? (count > 1 ? `${player.name} (${count})` : player.name) : '';
+            })
+            .filter(Boolean)
+            .join(', ');
+          result += `⚪ ${whiteScorerNames}\n`;
+        }
+      }
+    } else {
+      result += `🔴 Red - vs - White ⚪\n📋 Result pending`;
+    }
+
+    return result;
+  };
+
+  const handleCopyResult = async (match: Match) => {
+    const text = generateWhatsAppResult(match);
+    try {
+      await navigator.clipboard.writeText(text);
+      setAlertMessage({ message: 'Copied to clipboard!', type: 'success' });
+    } catch (err) {
+      console.error('Error copying to clipboard:', err);
+      setAlertMessage({ message: 'Failed to copy', type: 'error' });
+    }
+  };
+
   return (
     <div className="results-page">
       <h1>Match Results</h1>
@@ -316,6 +384,13 @@ export function Results() {
                       <div className="result-actions">
                         <button onClick={() => startEditing(match)} className="btn btn-primary">
                           {match.status === 'pending' ? 'Add Result' : 'Edit Result'}
+                        </button>
+                        <button
+                          onClick={() => handleCopyResult(match)}
+                          className="btn btn-secondary"
+                          data-emoji="📋"
+                        >
+                          Copy Result
                         </button>
                         <button
                           onClick={() => handleDeleteMatch(match.id)}

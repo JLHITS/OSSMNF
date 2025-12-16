@@ -1971,3 +1971,132 @@ h1, h2, h3 {
     flex: 1 0 auto;
   }
 }
+
+/* ===== Form Tracker Styles ===== */
+.form-col {
+  min-width: 120px;
+}
+
+.form-display {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: nowrap;
+}
+
+.form-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+}
+
+.form-win {
+  background-color: #22c55e;
+}
+
+.form-loss {
+  background-color: #ef4444;
+}
+
+.form-draw {
+  background-color: #9ca3af;
+}
+
+.no-form {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.streak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  margin-left: 6px;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.streak-hot {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.streak-cold {
+  background-color: #e0f2fe;
+  color: #0284c7;
+}
+
+/* ===== Achievement Badges Styles ===== */
+.player-name-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.badges-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  align-items: center;
+}
+
+.achievement-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  cursor: help;
+  transition: transform 0.15s ease;
+}
+
+.achievement-badge:hover {
+  transform: scale(1.2);
+}
+
+.more-badges {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 5px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #6b7280;
+  background-color: #f3f4f6;
+  border-radius: 8px;
+  cursor: help;
+}
+
+/* Mobile adjustments for form and badges */
+@media (max-width: 768px) {
+  .form-col {
+    min-width: 100px;
+  }
+
+  .form-indicator {
+    width: 18px;
+    height: 18px;
+    font-size: 0.6rem;
+  }
+
+  .streak-badge {
+    font-size: 0.65rem;
+    padding: 1px 4px;
+  }
+
+  .achievement-badge {
+    font-size: 0.75rem;
+  }
+
+  .badges-row {
+    gap: 1px;
+  }
+}

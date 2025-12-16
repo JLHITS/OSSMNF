@@ -207,6 +207,43 @@ export function Play() {
     }
   };
 
+  const generateWhatsAppLineup = (): string => {
+    const today = new Date().toLocaleDateString('en-GB', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+
+    const formatTeamPlayer = (player: TeamPlayer) => {
+      const captain = player.isCaptain ? '⭐ ' : '';
+      return `${captain}${player.name} - ${player.position}`;
+    };
+
+    const redList = redTeam.map(formatTeamPlayer).join('\n');
+    const whiteList = whiteTeam.map(formatTeamPlayer).join('\n');
+
+    return `⚽ Monday Night Football - ${matchSize}
+📅 ${today}
+
+🔴 RED TEAM
+${redList}
+
+⚪ WHITE TEAM
+${whiteList}`;
+  };
+
+  const handleCopyWhatsApp = async () => {
+    const text = generateWhatsAppLineup();
+    try {
+      await navigator.clipboard.writeText(text);
+      setAlertMessage({ message: 'Copied to clipboard!', type: 'success' });
+    } catch (err) {
+      console.error('Error copying to clipboard:', err);
+      setAlertMessage({ message: 'Failed to copy', type: 'error' });
+    }
+  };
+
   const resetTeams = () => {
     setTeamsGenerated(false);
     setRedTeam([]);
@@ -325,6 +362,9 @@ export function Play() {
             </button>
             <button onClick={handleShare} className="btn btn-secondary" data-emoji="📤">
               Share
+            </button>
+            <button onClick={handleCopyWhatsApp} className="btn btn-secondary" data-emoji="📋">
+              Copy for WhatsApp
             </button>
           </div>
 

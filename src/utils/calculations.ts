@@ -1,4 +1,4 @@
-import type { Player, Position, TeamPlayer, MatchSize } from '../types';
+import type { Player, Position, TeamPlayer, MatchSize, Match } from '../types';
 
 export function calculateOVR(
   fitness: number,
@@ -154,4 +154,102 @@ export function generateBalancedTeams(
   whiteTeam[whiteCaptainIndex].isCaptain = true;
 
   return { redTeam, whiteTeam };
+}
+
+/**
+ * Calculate player form (last 5 matches) and current streak
+ */
+export function calculatePlayerForm(
+  playerId: string,
+  matches: Match[]
+): { form: ('W' | 'L' | 'D')[]; streak: { type: 'W' | 'L' | 'D' | 'none'; count: number }; captainCount: number } {
+  // Filter completed matches where player participated, sorted by date descending
+  const playerMatches = matches
+    .filter((match) => {
+      if (match.status !== 'completed') return false;
+      const inRed = match.redTeam.some((p) => p.id === playerId);
+      const inWhite = match.whiteTeam.some((p) => p.id === playerId);
+      return inRed || inWhite;
+    })
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  // Count captain appearances
+  let captainCount = 0;
+  matches.forEach((match) => {
+    const redPlayer = match.redTeam.find((p) => p.id === playerId);
+    const whitePlayer = match.whiteTeam.find((p) => p.id === playerId);
+    if (redPlayer?.isCaptain || whitePlayer?.isCaptain) {
+      captainCount++;
+    }
+  });
+
+  // Calculate form for last 5 matches
+  const form: ('W' | 'L' | 'D')[] = [];
+  for (let i = 0; i < Math.min(5, playerMatches.length); i++) {
+    const match = playerMatches[i];
+    const inRed = match.redTeam.some((p) => p.id === playerId);
+
+    if (match.redScore === null || match.whiteScore === null) continue;
+
+    if (match.redScore === match.whiteScore) {
+      form.push('D');
+    } else if (inRed) {
+      form.push(match.redScore > match.whiteScore ? 'W' : 'L');
+    } else {
+      form.push(match.whiteScore > match.redScore ? 'W' : 'L');
+    }
+  }
+
+  // Calculate current streak
+  let streak: { type: 'W' | 'L' | 'D' | 'none'; count: number } = { type: 'none', count: 0 };
+  if (form.length > 0) {
+    const streakType = form[0];
+    let count = 0;
+    for (const result of form) {
+      if (result === streakType) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    streak = { type: streakType, count };
+  }
+
+  return { form, streak, captainCount };
+}
+
+/**
+ * Calculate the longest win streak a player has ever had
+ */
+export function calculateLongestWinStreak(playerId: string, matches: Match[]): number {
+  // Get all completed matches for this player, sorted by date
+  const playerMatches = matches
+    .filter((match) => {
+      if (match.status !== 'completed') return false;
+      const inRed = match.redTeam.some((p) => p.id === playerId);
+      const inWhite = match.whiteTeam.some((p) => p.id === playerId);
+      return inRed || inWhite;
+    })
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  let longestStreak = 0;
+  let currentStreak = 0;
+
+  for (const match of playerMatches) {
+    if (match.redScore === null || match.whiteScore === null) continue;
+
+    const inRed = match.redTeam.some((p) => p.id === playerId);
+    const won = inRed
+      ? match.redScore > match.whiteScore
+      : match.whiteScore > match.redScore;
+
+    if (won) {
+      currentStreak++;
+      longestStreak = Math.max(longestStreak, currentStreak);
+    } else {
+      currentStreak = 0;
+    }
+  }
+
+  return longestStreak;
 }

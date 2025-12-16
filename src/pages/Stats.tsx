@@ -1,14 +1,20 @@
 import { useMemo } from 'react';
 import { useData } from '../context/DataContext';
 import { calculatePlayerStats } from '../services/firebase';
+import { calculatePlayerForm } from '../utils/calculations';
+import { calculatePlayerAchievements } from '../utils/achievements';
 import { getCloudinaryImageUrl } from '../services/cloudinary';
-import type { PlayerStats } from '../types';
+import type { PlayerStats, Achievement } from '../types';
 import placeholder from '../assets/placeholder.png';
+
+interface ExtendedPlayerStats extends PlayerStats {
+  achievements: Achievement[];
+}
 
 export function Stats() {
   const { players, matches } = useData();
 
-  const playerStats: PlayerStats[] = useMemo(() => {
+  const playerStats: ExtendedPlayerStats[] = useMemo(() => {
     const statsMap = calculatePlayerStats(players, matches);
 
     return players
@@ -18,6 +24,12 @@ export function Stats() {
         const winPercentage = totalMatches > 0
           ? Math.round((stats.wins / totalMatches) * 100)
           : 0;
+
+        // Calculate form and streak
+        const { form, streak, captainCount } = calculatePlayerForm(player.id, matches);
+
+        // Calculate achievements
+        const achievements = calculatePlayerAchievements(player.id, stats, matches, captainCount);
 
         return {
           playerId: player.id,
@@ -29,6 +41,10 @@ export function Stats() {
           totalMatches,
           winPercentage,
           goals: stats.goals,
+          form,
+          currentStreak: streak,
+          captainCount,
+          achievements,
         };
       })
       .filter((stat) => stat.totalMatches > 0)
@@ -52,6 +68,29 @@ export function Stats() {
     if (winPercentage >= 60) return 'win-rate-high';
     if (winPercentage >= 40) return 'win-rate-medium';
     return 'win-rate-low';
+  };
+
+  const getFormIndicator = (result: 'W' | 'L' | 'D') => {
+    switch (result) {
+      case 'W':
+        return <span className="form-indicator form-win">W</span>;
+      case 'L':
+        return <span className="form-indicator form-loss">L</span>;
+      case 'D':
+        return <span className="form-indicator form-draw">D</span>;
+    }
+  };
+
+  const getStreakDisplay = (streak: { type: 'W' | 'L' | 'D' | 'none'; count: number }) => {
+    if (streak.type === 'none' || streak.count < 2) return null;
+
+    if (streak.type === 'W' && streak.count >= 3) {
+      return <span className="streak-badge streak-hot" title={`${streak.count} wins in a row`}>🔥{streak.count}</span>;
+    }
+    if (streak.type === 'L' && streak.count >= 3) {
+      return <span className="streak-badge streak-cold" title={`${streak.count} losses in a row`}>❄️{streak.count}</span>;
+    }
+    return null;
   };
 
   return (
@@ -83,6 +122,7 @@ export function Stats() {
                   <th className="stat-col">D</th>
                   <th className="stat-col">Played</th>
                   <th className="stat-col win-rate-col">Win %</th>
+                  <th className="form-col">Form</th>
                   <th className="stat-col goals-col">Goals*</th>
                 </tr>
               </thead>
@@ -100,7 +140,27 @@ export function Stats() {
                             (e.target as HTMLImageElement).src = placeholder;
                           }}
                         />
-                        <span className="player-name">{stat.playerName}</span>
+                        <div className="player-name-badges">
+                          <span className="player-name">{stat.playerName}</span>
+                          {stat.achievements.length > 0 && (
+                            <div className="badges-row">
+                              {stat.achievements.slice(0, 5).map((badge) => (
+                                <span
+                                  key={badge.id}
+                                  className="achievement-badge"
+                                  title={`${badge.name}: ${badge.description}`}
+                                >
+                                  {badge.icon}
+                                </span>
+                              ))}
+                              {stat.achievements.length > 5 && (
+                                <span className="more-badges" title={stat.achievements.slice(5).map(b => b.name).join(', ')}>
+                                  +{stat.achievements.length - 5}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="stat-col wins">{stat.wins}</td>
@@ -109,6 +169,20 @@ export function Stats() {
                     <td className="stat-col">{stat.totalMatches}</td>
                     <td className={`stat-col win-rate-col ${getWinRateColor(stat.winPercentage)}`}>
                       {stat.winPercentage}%
+                    </td>
+                    <td className="form-col">
+                      <div className="form-display">
+                        {stat.form.length > 0 ? (
+                          <>
+                            {stat.form.map((result, i) => (
+                              <span key={i}>{getFormIndicator(result)}</span>
+                            ))}
+                            {getStreakDisplay(stat.currentStreak)}
+                          </>
+                        ) : (
+                          <span className="no-form">-</span>
+                        )}
+                      </div>
                     </td>
                     <td className="stat-col goals-col">{stat.goals}</td>
                   </tr>

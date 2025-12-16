@@ -53,6 +53,18 @@ export interface PlayerStats {
   totalMatches: number;
   winPercentage: number;
   goals: number;
+  // Form tracking
+  form: ('W' | 'L' | 'D')[];  // Last 5 results, most recent first
+  currentStreak: { type: 'W' | 'L' | 'D' | 'none'; count: number };
+  // Captain tracking
+  captainCount: number;
+}
+
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
 }
 
 export interface AppState {
