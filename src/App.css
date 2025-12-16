@@ -1817,12 +1817,15 @@ body {
   }
 
   .teams-stats-row {
-    gap: 16px;
+    gap: 12px;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .team-stats {
-    flex: 1;
-    min-width: 140px;
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
   }
 
   .football-pitch {
@@ -1863,6 +1866,15 @@ body {
     font-size: 0.65rem;
     max-width: 90px;
     line-height: 1.15;
+  }
+
+  .team-attribute-averages {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px 8px;
+  }
+
+  .team-attribute-averages div {
+    padding: 6px 8px;
   }
 
   .teams-overview {
