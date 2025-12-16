@@ -33,7 +33,7 @@ function PlayerCard({ player, team, showRatings, isSelected, onSelect }: PlayerC
       onClick={() => onSelect(player, team)}
       className={`player-card ${team}-team ${isSelected ? 'swap-selected' : ''}`}
     >
-      <div className="player-photo-container">
+      <div className={`player-photo-container ${player.isCaptain ? 'has-captain' : ''}`}>
         <img
           src={player.photoUrl ? getCloudinaryImageUrl(player.photoUrl) : placeholder}
           alt={player.name}
@@ -50,7 +50,7 @@ function PlayerCard({ player, team, showRatings, isSelected, onSelect }: PlayerC
         )}
         {isSelected && (
           <span className="swap-indicator" title="Selected to swap">
-            ⟳
+            SWAP
           </span>
         )}
       </div>
