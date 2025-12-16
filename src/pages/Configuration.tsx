@@ -2,7 +2,7 @@ import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { useData } from '../context/DataContext';
 import type { Player, Position } from '../types';
 import { createPlayer, updatePlayer, deletePlayer } from '../services/firebase';
-import { uploadImageToCloudflare, getCloudflareImageUrl } from '../services/cloudflare';
+import { uploadImageToCloudinary, getCloudinaryImageUrl } from '../services/cloudinary';
 import { calculateOVR } from '../utils/calculations';
 import { Alert, Confirm } from '../components/Modal';
 import placeholder from '../assets/placeholder.png';
@@ -95,8 +95,8 @@ export function Configuration() {
       position: player.position,
       photoUrl: player.photoUrl,
     });
-    // Convert Cloudflare image ID to full URL for preview
-    const imageUrl = player.photoUrl ? getCloudflareImageUrl(player.photoUrl) : null;
+    // Convert Cloudinary public_id to full URL for preview
+    const imageUrl = player.photoUrl ? getCloudinaryImageUrl(player.photoUrl) : null;
     setPhotoPreview(imageUrl);
     setShowForm(true);
   };
@@ -131,17 +131,17 @@ export function Configuration() {
     setSaving(true);
 
     try {
-      let photoImageId = formData.photoUrl; // Now stores Cloudflare image ID
+      let photoPublicId = formData.photoUrl; // Now stores Cloudinary public_id
 
       // Upload photo if a new one was selected
       if (photoFile) {
         try {
           const tempId = editingPlayerId || 'temp-' + Date.now();
-          photoImageId = await uploadImageToCloudflare(photoFile, tempId);
+          photoPublicId = await uploadImageToCloudinary(photoFile, tempId);
         } catch (uploadErr) {
-          console.error('Cloudflare upload failed:', uploadErr);
+          console.error('Cloudinary upload failed:', uploadErr);
           // Continue without photo - will use placeholder
-          photoImageId = '';
+          photoPublicId = '';
           setAlertMessage({
             message: 'Photo upload failed. Player saved with placeholder image.',
             type: 'info'
@@ -156,7 +156,7 @@ export function Configuration() {
         attack: formData.attack,
         ballUse: formData.ballUse,
         position: formData.position,
-        photoUrl: photoImageId, // Store Cloudflare image ID
+        photoUrl: photoPublicId, // Store Cloudinary public_id
         ovr: calculatedOVR,
       };
 
@@ -456,7 +456,7 @@ export function Configuration() {
             {displayedPlayers.map((player) => (
               <div key={player.id} className="player-card-config">
                 <img
-                  src={player.photoUrl ? getCloudflareImageUrl(player.photoUrl) : placeholder}
+                  src={player.photoUrl ? getCloudinaryImageUrl(player.photoUrl) : placeholder}
                   alt={player.name}
                   className="player-config-photo"
                   onError={(e) => {

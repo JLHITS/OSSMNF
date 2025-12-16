@@ -2,7 +2,7 @@ import { useState, type Dispatch, type SetStateAction } from 'react';
 import { useData } from '../context/DataContext';
 import type { Match } from '../types';
 import { updateMatch, deleteMatch } from '../services/firebase';
-import { getCloudflareImageUrl } from '../services/cloudflare';
+import { getCloudinaryImageUrl } from '../services/cloudinary';
 import { Alert, Confirm } from '../components/Modal';
 import placeholder from '../assets/placeholder.png';
 
@@ -268,7 +268,7 @@ export function Results() {
                             {match.redTeam.map((player) => (
                               <li key={player.id}>
                                 <img
-                                  src={player.photoUrl ? getCloudflareImageUrl(player.photoUrl) : placeholder}
+                                  src={player.photoUrl ? getCloudinaryImageUrl(player.photoUrl) : placeholder}
                                   alt={player.name}
                                   className="mini-photo"
                                   onError={(e) => {
@@ -293,7 +293,7 @@ export function Results() {
                             {match.whiteTeam.map((player) => (
                               <li key={player.id}>
                                 <img
-                                  src={player.photoUrl ? getCloudflareImageUrl(player.photoUrl) : placeholder}
+                                  src={player.photoUrl ? getCloudinaryImageUrl(player.photoUrl) : placeholder}
                                   alt={player.name}
                                   className="mini-photo"
                                   onError={(e) => {

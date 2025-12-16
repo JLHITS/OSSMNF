@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useData } from '../context/DataContext';
 import { calculatePlayerStats } from '../services/firebase';
-import { getCloudflareImageUrl } from '../services/cloudflare';
+import { getCloudinaryImageUrl } from '../services/cloudinary';
 import type { PlayerStats } from '../types';
 import placeholder from '../assets/placeholder.png';
 
@@ -93,7 +93,7 @@ export function Stats() {
                     <td className="player-col">
                       <div className="player-info">
                         <img
-                          src={stat.photoUrl ? getCloudflareImageUrl(stat.photoUrl) : placeholder}
+                          src={stat.photoUrl ? getCloudinaryImageUrl(stat.photoUrl) : placeholder}
                           alt={stat.playerName}
                           className="stats-photo"
                           onError={(e) => {

@@ -6,7 +6,7 @@ import { Alert } from '../components/Modal';
 import type { TeamPlayer, MatchSize } from '../types';
 import { generateBalancedTeams, getTeamSize, calculateTeamOVR } from '../utils/calculations';
 import { createMatch } from '../services/firebase';
-import { getCloudflareImageUrl } from '../services/cloudflare';
+import { getCloudinaryImageUrl } from '../services/cloudinary';
 import placeholder from '../assets/placeholder.png';
 
 // Helper functions for localStorage
@@ -251,7 +251,7 @@ export function Play() {
                 onClick={() => togglePlayer(player.id)}
               >
                 <img
-                  src={player.photoUrl ? getCloudflareImageUrl(player.photoUrl) : placeholder}
+                  src={player.photoUrl ? getCloudinaryImageUrl(player.photoUrl) : placeholder}
                   alt={player.name}
                   className="player-select-photo"
                   onError={(e) => {
