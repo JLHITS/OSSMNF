@@ -96,11 +96,12 @@ export function Play() {
   };
 
   const availabilitySummary = useMemo(() => {
+    // Only count main playing squad, exclude reserves from counts/messages
     const inPlayers: Player[] = [];
     const outPlayers: Player[] = [];
     const waitingPlayers: Player[] = [];
 
-    players.forEach((player) => {
+    playingSquad.forEach((player) => {
       const status = availability.get(player.id)?.status || 'unconfirmed';
       if (status === 'in') inPlayers.push(player);
       else if (status === 'out') outPlayers.push(player);
@@ -108,7 +109,7 @@ export function Play() {
     });
 
     return { inPlayers, outPlayers, waitingPlayers };
-  }, [players, availability]);
+  }, [playingSquad, availability]);
 
   // Set player availability via dropdown (instead of cycling button)
   const handleStatusChange = async (playerId: string, newStatus: AvailabilityStatus) => {
