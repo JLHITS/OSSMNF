@@ -361,10 +361,11 @@ h1, h2, h3 {
 }
 
 .player-select-card {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 10px;
-  padding: 10px;
+  padding: 10px 12px;
   background: var(--bg-light);
   border: 2px solid var(--border-light);
   border-radius: 10px;
@@ -2392,9 +2393,9 @@ h1, h2, h3 {
 /* Player card actions (status + checkbox) */
 .player-card-actions {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
 }
 
 /* Mobile adjustments for reserve pool */
