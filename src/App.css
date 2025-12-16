@@ -420,30 +420,89 @@ body {
 }
 
 /* ==================== FOOTBALL PITCH ==================== */
-.pitch-container {
+.pitch-container-wrapper {
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 24px;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
   margin: 20px 0;
+}
+
+.teams-controls-row {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+.captain-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-white);
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 2px 6px var(--shadow-light);
+}
+
+.captain-selector label {
+  font-weight: 600;
+  color: var(--text-dark);
+  font-size: 0.9rem;
+}
+
+.captain-selector select {
+  padding: 8px 12px;
+  border: 2px solid var(--border-light);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  background: var(--bg-white);
+  cursor: pointer;
+  min-width: 150px;
+}
+
+.captain-selector select:focus {
+  outline: none;
+  border-color: var(--primary-green);
+}
+
+.teams-stats-row {
+  display: flex;
+  gap: 32px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
 }
 
 .team-stats {
   background: var(--bg-white);
   border-radius: 12px;
-  padding: 16px 20px;
+  padding: 16px 24px;
   box-shadow: 0 2px 8px var(--shadow-light);
-  min-width: 140px;
+  min-width: 160px;
   text-align: center;
+  border: 3px solid transparent;
 }
 
 .team-stats h3 {
-  font-size: 1rem;
+  font-size: 1.1rem;
   margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.red-stats {
+  border-color: var(--red-team);
 }
 
 .red-stats h3 {
   color: var(--red-team);
+}
+
+.white-stats {
+  border-color: var(--text-dark);
 }
 
 .white-stats h3 {
@@ -452,13 +511,14 @@ body {
 
 .team-ovr {
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   color: var(--text-dark);
 }
 
 .team-total {
   font-size: 0.85rem;
   color: var(--text-light);
+  margin-top: 4px;
 }
 
 .football-pitch {
@@ -570,14 +630,24 @@ body {
   bottom: 0;
 }
 
-.formation-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  gap: 16px;
+/* Team Formation Layout */
+.team-formation {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
   width: 100%;
   height: 100%;
-  padding: 15px;
+  padding: 10px;
+  gap: 8px;
+}
+
+.formation-row {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  justify-items: center;
+  align-items: center;
 }
 
 .formation-slot {
@@ -593,7 +663,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.98);
   border-radius: 10px;
   padding: 10px;
   min-width: 100px;
@@ -601,6 +671,7 @@ body {
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
   cursor: grab;
   transition: transform 0.2s, box-shadow 0.2s;
+  border: 3px solid transparent;
 }
 
 .player-card:hover {
@@ -614,11 +685,13 @@ body {
 }
 
 .player-card.red-team {
-  border-top: 4px solid var(--red-team);
+  border-color: var(--red-team);
+  background: linear-gradient(to bottom, rgba(196, 30, 58, 0.15) 0%, rgba(255, 255, 255, 0.98) 30%);
 }
 
 .player-card.white-team {
-  border-top: 4px solid var(--text-dark);
+  border-color: var(--text-dark);
+  background: linear-gradient(to bottom, rgba(26, 26, 26, 0.15) 0%, rgba(255, 255, 255, 0.98) 30%);
 }
 
 .player-photo-container {
@@ -1612,15 +1685,26 @@ body {
     padding: 16px;
   }
 
-  .pitch-container {
-    flex-direction: column;
+  .pitch-container-wrapper {
+    margin: 16px 0;
+  }
+
+  .teams-controls-row {
+    gap: 16px;
+  }
+
+  .captain-selector {
+    flex: 1;
+    min-width: 250px;
+  }
+
+  .teams-stats-row {
+    gap: 16px;
   }
 
   .team-stats {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex: 1;
+    min-width: 140px;
   }
 
   .football-pitch {

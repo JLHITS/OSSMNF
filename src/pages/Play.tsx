@@ -47,6 +47,7 @@ export function Play() {
   const [teamsGenerated, setTeamsGenerated] = useState(initialState.redTeam.length > 0 && initialState.whiteTeam.length > 0);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [showRatings, setShowRatings] = useState(false); // Default hidden
   const pitchRef = useRef<HTMLDivElement>(null);
   const [alertMessage, setAlertMessage] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
@@ -111,22 +112,22 @@ export function Play() {
     setWhiteTeam(newWhiteTeam);
   };
 
-  const handleCaptainChange = (playerId: string, team: 'red' | 'white') => {
-    if (team === 'red') {
-      setRedTeam((prev) =>
-        prev.map((p) => ({
-          ...p,
-          isCaptain: p.id === playerId ? !p.isCaptain : false,
-        }))
-      );
-    } else {
-      setWhiteTeam((prev) =>
-        prev.map((p) => ({
-          ...p,
-          isCaptain: p.id === playerId ? !p.isCaptain : false,
-        }))
-      );
-    }
+  const handleRedCaptainChange = (playerId: string) => {
+    setRedTeam((prev) =>
+      prev.map((p) => ({
+        ...p,
+        isCaptain: p.id === playerId,
+      }))
+    );
+  };
+
+  const handleWhiteCaptainChange = (playerId: string) => {
+    setWhiteTeam((prev) =>
+      prev.map((p) => ({
+        ...p,
+        isCaptain: p.id === playerId,
+      }))
+    );
   };
 
   const handleSaveMatch = async () => {
@@ -299,6 +300,9 @@ export function Play() {
             <button onClick={handleGenerateTeams} className="btn btn-secondary">
               Regenerate
             </button>
+            <button onClick={() => setShowRatings(!showRatings)} className="btn btn-secondary">
+              {showRatings ? 'Hide Ratings' : 'Show Ratings'}
+            </button>
             <button onClick={handleSaveMatch} disabled={saving} className="btn btn-primary">
               {saving ? 'Saving...' : 'Save Match'}
             </button>
@@ -310,17 +314,49 @@ export function Play() {
             </button>
           </div>
 
+          <div className="teams-controls-row">
+            <div className="captain-selector">
+              <label htmlFor="red-captain">Reds Captain:</label>
+              <select
+                id="red-captain"
+                value={redTeam.find(p => p.isCaptain)?.id || ''}
+                onChange={(e) => handleRedCaptainChange(e.target.value)}
+              >
+                {redTeam.map((player) => (
+                  <option key={player.id} value={player.id}>
+                    {player.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="captain-selector">
+              <label htmlFor="white-captain">Non-Reds Captain:</label>
+              <select
+                id="white-captain"
+                value={whiteTeam.find(p => p.isCaptain)?.id || ''}
+                onChange={(e) => handleWhiteCaptainChange(e.target.value)}
+              >
+                {whiteTeam.map((player) => (
+                  <option key={player.id} value={player.id}>
+                    {player.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           <div ref={pitchRef}>
             <FootballPitch
               redTeam={redTeam}
               whiteTeam={whiteTeam}
               onTeamsChange={handleTeamsChange}
-              onCaptainChange={handleCaptainChange}
+              showRatings={showRatings}
             />
           </div>
 
           <p className="drag-hint">
-            Drag players between teams to swap. Click "Make C" to assign captain.
+            Drag players between teams to swap positions.
           </p>
         </div>
       )}

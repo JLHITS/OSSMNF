@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -17,16 +17,25 @@ interface FootballPitchProps {
   redTeam: TeamPlayer[];
   whiteTeam: TeamPlayer[];
   onTeamsChange: (redTeam: TeamPlayer[], whiteTeam: TeamPlayer[]) => void;
-  onCaptainChange: (playerId: string, team: 'red' | 'white') => void;
+  showRatings: boolean;
 }
 
 interface PlayerCardProps {
   player: TeamPlayer;
   team: 'red' | 'white';
-  onCaptainClick: () => void;
+  showRatings: boolean;
 }
 
-function DraggablePlayerCard({ player, team, onCaptainClick }: PlayerCardProps) {
+// Formation configurations: [back row, middle row, front row]
+const FORMATIONS: Record<number, number[]> = {
+  5: [2, 2, 1], // 5v5: 2-2-1
+  6: [2, 2, 2], // 6v6: 2-2-2
+  7: [2, 3, 2], // 7v7: 2-3-2
+  8: [3, 3, 2], // 8v8: 3-3-2
+  9: [3, 3, 3], // 9v9: 3-3-3
+};
+
+function DraggablePlayerCard({ player, team, showRatings }: PlayerCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: player.id,
     data: { player, team },
@@ -57,21 +66,13 @@ function DraggablePlayerCard({ player, team, onCaptainClick }: PlayerCardProps) 
           }}
         />
         {player.isCaptain && (
-          <span className="captain-badge" title="Captain">C</span>
+          <span className="captain-badge" title="Captain">
+            C
+          </span>
         )}
       </div>
       <span className="player-name">{player.name}</span>
-      <span className="player-ovr">{player.ovr}</span>
-      <button
-        className="captain-toggle"
-        onClick={(e) => {
-          e.stopPropagation();
-          onCaptainClick();
-        }}
-        title={player.isCaptain ? 'Remove captain' : 'Make captain'}
-      >
-        {player.isCaptain ? 'Remove C' : 'Make C'}
-      </button>
+      {showRatings && <span className="player-ovr">{player.ovr}</span>}
     </div>
   );
 }
@@ -98,163 +99,130 @@ export function FootballPitch({
   redTeam,
   whiteTeam,
   onTeamsChange,
-  onCaptainChange,
+  showRatings,
 }: FootballPitchProps) {
-  const pitchRef = useRef<HTMLDivElement>(null);
-  const sensors = useSensors(useSensor(PointerSensor, {
-    activationConstraint: {
-      distance: 8,
-    },
-  }));
-
-  // 2-3-3 formation positions (relative to team half)
-  const getFormationPositions = (teamSize: number): { row: number; col: number }[] => {
-    // For 2-3-3 formation
-    if (teamSize >= 8) {
-      return [
-        { row: 0, col: 1 }, { row: 0, col: 2 }, // 2 defenders
-        { row: 1, col: 0 }, { row: 1, col: 1 }, { row: 1, col: 2 }, // 3 midfielders
-        { row: 2, col: 0 }, { row: 2, col: 1 }, { row: 2, col: 2 }, // 3 attackers
-        { row: 0, col: 0 }, // extra if 9
-      ];
-    }
-    if (teamSize === 7) {
-      return [
-        { row: 0, col: 0 }, { row: 0, col: 2 },
-        { row: 1, col: 0 }, { row: 1, col: 1 }, { row: 1, col: 2 },
-        { row: 2, col: 0 }, { row: 2, col: 2 },
-      ];
-    }
-    if (teamSize === 6) {
-      return [
-        { row: 0, col: 0 }, { row: 0, col: 2 },
-        { row: 1, col: 0 }, { row: 1, col: 2 },
-        { row: 2, col: 0 }, { row: 2, col: 2 },
-      ];
-    }
-    if (teamSize === 5) {
-      return [
-        { row: 0, col: 1 },
-        { row: 1, col: 0 }, { row: 1, col: 2 },
-        { row: 2, col: 0 }, { row: 2, col: 2 },
-      ];
-    }
-    return [];
-  };
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over) return;
 
-    const draggedPlayerId = active.id as string;
-    const sourceTeam = (active.data.current as { team: 'red' | 'white' }).team;
-    const targetTeam = over.id as 'red' | 'white';
+    const sourceTeam = active.data.current?.team as 'red' | 'white';
+    const destTeam = over.id as 'red' | 'white';
 
-    if (sourceTeam === targetTeam) return;
+    if (sourceTeam === destTeam) return;
 
-    // Find the dragged player
-    const sourceArray = sourceTeam === 'red' ? [...redTeam] : [...whiteTeam];
-    const targetArray = targetTeam === 'red' ? [...redTeam] : [...whiteTeam];
+    const draggedPlayer = active.data.current?.player as TeamPlayer;
+    const allPlayers = [...redTeam, ...whiteTeam];
+    const targetPlayer = allPlayers.find(
+      (p) => p.id === over.data.current?.player?.id
+    );
 
-    const playerIndex = sourceArray.findIndex((p) => p.id === draggedPlayerId);
-    if (playerIndex === -1) return;
+    if (!targetPlayer) return;
 
-    const [player] = sourceArray.splice(playerIndex, 1);
-    player.isCaptain = false; // Reset captain when moving
-    targetArray.push(player);
+    let newRedTeam = [...redTeam];
+    let newWhiteTeam = [...whiteTeam];
 
     if (sourceTeam === 'red') {
-      onTeamsChange(sourceArray, targetArray);
+      newRedTeam = newRedTeam.filter((p) => p.id !== draggedPlayer.id);
+      newWhiteTeam = newWhiteTeam.map((p) =>
+        p.id === targetPlayer.id ? draggedPlayer : p
+      );
+      newRedTeam.push(targetPlayer);
     } else {
-      onTeamsChange(targetArray, sourceArray);
+      newWhiteTeam = newWhiteTeam.filter((p) => p.id !== draggedPlayer.id);
+      newRedTeam = newRedTeam.map((p) =>
+        p.id === targetPlayer.id ? draggedPlayer : p
+      );
+      newWhiteTeam.push(targetPlayer);
     }
+
+    onTeamsChange(newRedTeam, newWhiteTeam);
   };
 
-  const positions = getFormationPositions(Math.max(redTeam.length, whiteTeam.length));
+  const renderTeamFormation = (team: TeamPlayer[], teamName: 'red' | 'white') => {
+    const formation = FORMATIONS[team.length] || [3, 3, 3];
+    const rows: TeamPlayer[][] = [];
+    let playerIndex = 0;
 
-  const calculateRedOvr = () => {
-    if (redTeam.length === 0) return 0;
-    return (redTeam.reduce((sum, p) => sum + p.ovr, 0) / redTeam.length).toFixed(1);
+    // Build rows based on formation
+    formation.forEach((count) => {
+      rows.push(team.slice(playerIndex, playerIndex + count));
+      playerIndex += count;
+    });
+
+    return (
+      <div className="team-formation">
+        {rows.map((row, rowIndex) => (
+          <div key={rowIndex} className="formation-row" style={{ gridTemplateColumns: `repeat(${row.length}, 1fr)` }}>
+            {row.map((player) => (
+              <div key={player.id} className="formation-slot">
+                <DraggablePlayerCard
+                  player={player}
+                  team={teamName}
+                  showRatings={showRatings}
+                />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    );
   };
 
-  const calculateWhiteOvr = () => {
-    if (whiteTeam.length === 0) return 0;
-    return (whiteTeam.reduce((sum, p) => sum + p.ovr, 0) / whiteTeam.length).toFixed(1);
+  const calculateTeamOvr = (team: TeamPlayer[]) => {
+    if (team.length === 0) return 0;
+    const total = team.reduce((sum, player) => sum + player.ovr, 0);
+    return (total / team.length).toFixed(1);
   };
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <div className="pitch-container" ref={pitchRef}>
-        <div className="team-stats red-stats">
-          <h3>Red Team</h3>
-          <p className="team-ovr">AVG OVR: {calculateRedOvr()}</p>
-          <p className="team-total">Total: {redTeam.reduce((sum, p) => sum + p.ovr, 0).toFixed(1)}</p>
-        </div>
-
+      <div className="pitch-container-wrapper">
         <div className="football-pitch">
           <div className="pitch-markings">
-            <div className="center-circle"></div>
-            <div className="center-line"></div>
-            <div className="penalty-area top"></div>
-            <div className="penalty-area bottom"></div>
-            <div className="goal-area top"></div>
-            <div className="goal-area bottom"></div>
+            <div className="center-line" />
+            <div className="center-circle" />
+            <div className="penalty-area top" />
+            <div className="penalty-area bottom" />
+            <div className="goal-area top" />
+            <div className="goal-area bottom" />
           </div>
 
           <DroppableZone id="white" className="team-half white-half">
-            <div className="formation-grid">
-              {whiteTeam.map((player, index) => {
-                const pos = positions[index] || { row: 2, col: 1 };
-                return (
-                  <div
-                    key={player.id}
-                    className="formation-slot"
-                    style={{
-                      gridRow: pos.row + 1,
-                      gridColumn: pos.col + 1,
-                    }}
-                  >
-                    <DraggablePlayerCard
-                      player={player}
-                      team="white"
-                      onCaptainClick={() => onCaptainChange(player.id, 'white')}
-                    />
-                  </div>
-                );
-              })}
-            </div>
+            {renderTeamFormation(whiteTeam, 'white')}
           </DroppableZone>
 
           <DroppableZone id="red" className="team-half red-half">
-            <div className="formation-grid">
-              {redTeam.map((player, index) => {
-                const pos = positions[index] || { row: 2, col: 1 };
-                return (
-                  <div
-                    key={player.id}
-                    className="formation-slot"
-                    style={{
-                      gridRow: 3 - pos.row,
-                      gridColumn: pos.col + 1,
-                    }}
-                  >
-                    <DraggablePlayerCard
-                      player={player}
-                      team="red"
-                      onCaptainClick={() => onCaptainChange(player.id, 'red')}
-                    />
-                  </div>
-                );
-              })}
-            </div>
+            {renderTeamFormation(redTeam, 'red')}
           </DroppableZone>
         </div>
 
-        <div className="team-stats white-stats">
-          <h3>White Team</h3>
-          <p className="team-ovr">AVG OVR: {calculateWhiteOvr()}</p>
-          <p className="team-total">Total: {whiteTeam.reduce((sum, p) => sum + p.ovr, 0).toFixed(1)}</p>
-        </div>
+        {showRatings && (
+          <div className="teams-stats-row">
+            <div className="team-stats red-stats">
+              <h3>Reds</h3>
+              <p className="team-ovr">AVG OVR: {calculateTeamOvr(redTeam)}</p>
+              <p className="team-total">
+                Total: {redTeam.reduce((sum, p) => sum + p.ovr, 0).toFixed(1)}
+              </p>
+            </div>
+
+            <div className="team-stats white-stats">
+              <h3>Non-Reds</h3>
+              <p className="team-ovr">AVG OVR: {calculateTeamOvr(whiteTeam)}</p>
+              <p className="team-total">
+                Total: {whiteTeam.reduce((sum, p) => sum + p.ovr, 0).toFixed(1)}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </DndContext>
   );
