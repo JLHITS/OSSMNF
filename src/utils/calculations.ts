@@ -10,17 +10,18 @@ export function calculateOVR(
   let adjustedDefence = defence;
   let adjustedAttack = attack;
 
+  // Modifiers: 15% bonus/penalty to make position choice meaningful
   switch (position) {
     case 'DEF':
-      adjustedDefence = defence * 1.05;
-      adjustedAttack = attack * 0.95;
+      adjustedDefence = defence * 1.15;
+      adjustedAttack = attack * 0.85;
       break;
     case 'ATT':
-      adjustedAttack = attack * 1.05;
-      adjustedDefence = defence * 0.95;
+      adjustedAttack = attack * 1.15;
+      adjustedDefence = defence * 0.85;
       break;
     case 'ALR':
-      // No modifier
+      // No modifier - balanced player
       break;
   }
 

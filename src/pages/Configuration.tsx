@@ -246,8 +246,8 @@ export function Configuration() {
                 <div className="rating-input">
                   <label htmlFor="defence">
                     Defence <span className="weight">(25%)</span>
-                    {formData.position === 'DEF' && <span className="modifier">x1.05</span>}
-                    {formData.position === 'ATT' && <span className="modifier red">x0.95</span>}
+                    {formData.position === 'DEF' && <span className="modifier">x1.15</span>}
+                    {formData.position === 'ATT' && <span className="modifier red">x0.85</span>}
                   </label>
                   <input
                     type="range"
@@ -264,8 +264,8 @@ export function Configuration() {
                 <div className="rating-input">
                   <label htmlFor="attack">
                     Attack <span className="weight">(20%)</span>
-                    {formData.position === 'ATT' && <span className="modifier">x1.05</span>}
-                    {formData.position === 'DEF' && <span className="modifier red">x0.95</span>}
+                    {formData.position === 'ATT' && <span className="modifier">x1.15</span>}
+                    {formData.position === 'DEF' && <span className="modifier red">x0.85</span>}
                   </label>
                   <input
                     type="range"
