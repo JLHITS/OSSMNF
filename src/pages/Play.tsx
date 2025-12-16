@@ -300,9 +300,18 @@ export function Play() {
             <button onClick={handleGenerateTeams} className="btn btn-secondary">
               Regenerate
             </button>
-            <button onClick={() => setShowRatings(!showRatings)} className="btn btn-secondary">
-              {showRatings ? 'Hide Ratings' : 'Show Ratings'}
-            </button>
+            <label className="toggle-control">
+              <input
+                type="checkbox"
+                className="toggle-input"
+                checked={showRatings}
+                onChange={() => setShowRatings(!showRatings)}
+              />
+              <span className="toggle-switch">
+                <span className="toggle-thumb" />
+              </span>
+              <span>{showRatings ? 'Hide ratings' : 'Show ratings'}</span>
+            </label>
             <button onClick={handleSaveMatch} disabled={saving} className="btn btn-primary">
               {saving ? 'Saving...' : 'Save Match'}
             </button>
