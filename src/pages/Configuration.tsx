@@ -1,7 +1,8 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { useData } from '../context/DataContext';
 import type { Player, Position } from '../types';
-import { createPlayer, updatePlayer, deletePlayer, uploadPlayerPhoto } from '../services/firebase';
+import { createPlayer, updatePlayer, deletePlayer } from '../services/firebase';
+import { uploadImageToCloudflare, getCloudflareImageUrl } from '../services/cloudflare';
 import { calculateOVR } from '../utils/calculations';
 import { Alert, Confirm } from '../components/Modal';
 import placeholder from '../assets/placeholder.png';
@@ -94,7 +95,9 @@ export function Configuration() {
       position: player.position,
       photoUrl: player.photoUrl,
     });
-    setPhotoPreview(player.photoUrl || null);
+    // Convert Cloudflare image ID to full URL for preview
+    const imageUrl = player.photoUrl ? getCloudflareImageUrl(player.photoUrl) : null;
+    setPhotoPreview(imageUrl);
     setShowForm(true);
   };
 
@@ -128,19 +131,19 @@ export function Configuration() {
     setSaving(true);
 
     try {
-      let photoUrl = formData.photoUrl;
+      let photoImageId = formData.photoUrl; // Now stores Cloudflare image ID
 
       // Upload photo if a new one was selected
       if (photoFile) {
         try {
-          const tempId = editingPlayerId || 'new';
-          photoUrl = await uploadPlayerPhoto(tempId, photoFile);
+          const tempId = editingPlayerId || 'temp-' + Date.now();
+          photoImageId = await uploadImageToCloudflare(photoFile, tempId);
         } catch (uploadErr) {
-          console.warn('Photo upload failed (CORS or storage issue), using placeholder:', uploadErr);
+          console.error('Cloudflare upload failed:', uploadErr);
           // Continue without photo - will use placeholder
-          photoUrl = '';
+          photoImageId = '';
           setAlertMessage({
-            message: 'Photo upload not available. Player saved with placeholder image.',
+            message: 'Photo upload failed. Player saved with placeholder image.',
             type: 'info'
           });
         }
@@ -153,7 +156,7 @@ export function Configuration() {
         attack: formData.attack,
         ballUse: formData.ballUse,
         position: formData.position,
-        photoUrl,
+        photoUrl: photoImageId, // Store Cloudflare image ID
         ovr: calculatedOVR,
       };
 
@@ -453,7 +456,7 @@ export function Configuration() {
             {displayedPlayers.map((player) => (
               <div key={player.id} className="player-card-config">
                 <img
-                  src={player.photoUrl || placeholder}
+                  src={player.photoUrl ? getCloudflareImageUrl(player.photoUrl) : placeholder}
                   alt={player.name}
                   className="player-config-photo"
                   onError={(e) => {

@@ -10,6 +10,7 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import type { TeamPlayer } from '../types';
+import { getCloudflareImageUrl } from '../services/cloudflare';
 import placeholder from '../assets/placeholder.png';
 
 interface FootballPitchProps {
@@ -48,7 +49,7 @@ function DraggablePlayerCard({ player, team, onCaptainClick }: PlayerCardProps) 
     >
       <div className="player-photo-container">
         <img
-          src={player.photoUrl || placeholder}
+          src={player.photoUrl ? getCloudflareImageUrl(player.photoUrl) : placeholder}
           alt={player.name}
           className="player-photo"
           onError={(e) => {
