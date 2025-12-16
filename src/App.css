@@ -224,6 +224,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  position: relative;
 }
 
 .btn:disabled {
@@ -264,6 +265,20 @@ body {
   font-size: 0.85rem;
 }
 
+.btn[data-emoji]::before {
+  content: attr(data-emoji);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.btn-small[data-emoji]::before {
+  font-size: 0.95rem;
+}
+
+.logout-button[data-emoji]::before {
+  content: attr(data-emoji);
+  margin-right: 6px;
+}
 /* ==================== ERROR MESSAGE ==================== */
 .error-message {
   background: #fef2f2;

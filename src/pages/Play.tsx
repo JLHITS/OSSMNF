@@ -239,10 +239,10 @@ export function Play() {
           </div>
 
           <div className="player-selection-actions">
-            <button onClick={selectAll} className="btn btn-secondary">
+            <button onClick={selectAll} className="btn btn-secondary" data-emoji="✅">
               Select All
             </button>
-            <button onClick={clearSelection} className="btn btn-secondary">
+            <button onClick={clearSelection} className="btn btn-secondary" data-emoji="🧹">
               Clear Selection
             </button>
           </div>
@@ -291,6 +291,7 @@ export function Play() {
             onClick={handleGenerateTeams}
             disabled={selectedPlayerIds.size !== requiredPlayers}
             className="btn btn-primary generate-btn"
+            data-emoji="🧠"
           >
             Generate Teams
           </button>
@@ -298,10 +299,10 @@ export function Play() {
       ) : (
         <div className="teams-display">
           <div className="teams-actions">
-            <button onClick={resetTeams} className="btn btn-secondary">
+            <button onClick={resetTeams} className="btn btn-secondary" data-emoji="🔁">
               Start Over
             </button>
-            <button onClick={handleGenerateTeams} className="btn btn-secondary">
+            <button onClick={handleGenerateTeams} className="btn btn-secondary" data-emoji="🔄">
               Regenerate
             </button>
             <label className="toggle-control">
@@ -316,13 +317,13 @@ export function Play() {
               </span>
               <span>{showRatings ? 'Hide ratings' : 'Show ratings'}</span>
             </label>
-            <button onClick={handleSaveMatch} disabled={saving} className="btn btn-primary">
+            <button onClick={handleSaveMatch} disabled={saving} className="btn btn-primary" data-emoji="💾">
               {saving ? 'Saving...' : 'Save Match'}
             </button>
-            <button onClick={handleDownloadPNG} className="btn btn-secondary">
+            <button onClick={handleDownloadPNG} className="btn btn-secondary" data-emoji="📥">
               Download PNG
             </button>
-            <button onClick={handleShare} className="btn btn-secondary">
+            <button onClick={handleShare} className="btn btn-secondary" data-emoji="📤">
               Share
             </button>
           </div>

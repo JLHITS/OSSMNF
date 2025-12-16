@@ -24,7 +24,7 @@ export function Layout() {
             Configuration
           </NavLink>
         </nav>
-        <button onClick={logout} className="logout-button">
+        <button onClick={logout} className="logout-button" data-emoji="👋">
           Logout
         </button>
       </header>

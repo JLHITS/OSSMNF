@@ -393,10 +393,10 @@ export function Configuration() {
         {error && <p className="error-message">{error}</p>}
 
         <div className="form-actions">
-          <button type="submit" disabled={saving} className="btn btn-primary">
+          <button type="submit" disabled={saving} className="btn btn-primary" data-emoji="💾">
             {saving ? 'Saving...' : editingPlayerId ? 'Update Player' : 'Add Player'}
           </button>
-          <button type="button" onClick={resetForm} className="btn btn-secondary">
+          <button type="button" onClick={resetForm} className="btn btn-secondary" data-emoji="✖️">
             Cancel
           </button>
         </div>
@@ -415,6 +415,7 @@ export function Configuration() {
               setShowForm(true);
             }}
             className="btn btn-primary"
+            data-emoji="➕"
           >
             Add New Player
           </button>
@@ -506,12 +507,14 @@ export function Configuration() {
                     <button
                       onClick={() => handleEditPlayer(player)}
                       className="btn btn-small"
+                      data-emoji="✏️"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDeletePlayer(player)}
                       className="btn btn-small btn-danger"
+                      data-emoji="🗑️"
                     >
                       Delete
                     </button>
