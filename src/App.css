@@ -355,18 +355,17 @@ h1, h2, h3 {
 
 .player-selection-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 12px;
   margin-bottom: 24px;
 }
 
 .player-select-card {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  background: var(--bg-light);
+  background: var(--bg-white);
   border: 2px solid var(--border-light);
   border-radius: 10px;
   cursor: pointer;
@@ -392,6 +391,9 @@ h1, h2, h3 {
 
 .player-select-info {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .player-select-name {
@@ -2393,9 +2395,9 @@ h1, h2, h3 {
 /* Player card actions (status + checkbox) */
 .player-card-actions {
   display: flex;
-  flex-direction: row;
   align-items: center;
   gap: 8px;
+  margin-left: 8px;
 }
 
 /* Mobile adjustments for reserve pool */
