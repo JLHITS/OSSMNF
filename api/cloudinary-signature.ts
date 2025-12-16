@@ -15,6 +15,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const CLOUDINARY_CLOUD_NAME = process.env.VITE_CLOUDINARY_CLOUD_NAME;
   const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
   const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
+  const CLOUDINARY_UPLOAD_PRESET = process.env.CLOUDINARY_UPLOAD_PRESET || 'player_avatars';
 
   if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
     console.error('Missing Cloudinary credentials');
@@ -31,11 +32,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Generate timestamp
     const timestamp = Math.round(Date.now() / 1000);
 
-    // Create public_id using player ID
-    const publicId = `ossmnf-players/player-${playerId}`;
+    // Create public_id using player ID (keep folder stable for signatures)
+    const publicId = `player_avatars/player-${playerId}`;
 
     // Create signature string (parameters must be in alphabetical order)
-    const paramsToSign = `folder=ossmnf-players&public_id=${publicId}&timestamp=${timestamp}${CLOUDINARY_API_SECRET}`;
+    const paramsToSign = `public_id=${publicId}&timestamp=${timestamp}&upload_preset=${CLOUDINARY_UPLOAD_PRESET}${CLOUDINARY_API_SECRET}`;
 
     // Generate SHA256 signature
     const signature = createHash('sha256').update(paramsToSign).digest('hex');
@@ -46,6 +47,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       publicId,
       cloudName: CLOUDINARY_CLOUD_NAME,
       apiKey: CLOUDINARY_API_KEY,
+      uploadPreset: CLOUDINARY_UPLOAD_PRESET,
     });
   } catch (error) {
     console.error('Signature generation error:', error);

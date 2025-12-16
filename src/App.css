@@ -521,9 +521,30 @@ body {
   margin-top: 4px;
 }
 
+.team-attribute-averages {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(80px, 1fr));
+  gap: 6px 12px;
+  margin-top: 10px;
+  font-size: 0.85rem;
+}
+
+.team-attribute-averages div {
+  display: flex;
+  justify-content: space-between;
+  background: var(--bg-light);
+  padding: 6px 10px;
+  border-radius: 8px;
+  color: var(--text-medium);
+}
+
+.team-attribute-averages strong {
+  color: var(--text-dark);
+}
+
 .football-pitch {
   width: 600px;
-  height: 800px;
+  height: 840px;
   background: linear-gradient(
     to bottom,
     var(--pitch-green) 0%,
@@ -614,7 +635,7 @@ body {
   left: 0;
   right: 0;
   height: 50%;
-  padding: 25px;
+  padding: 32px 24px;
   transition: background-color 0.2s;
 }
 
@@ -624,22 +645,24 @@ body {
 
 .white-half {
   top: 0;
+  padding-top: 44px;
 }
 
 .red-half {
   bottom: 0;
+  padding-bottom: 44px;
 }
 
 /* Team Formation Layout */
 .team-formation {
   display: flex;
   flex-direction: column;
-  justify-content: space-evenly;
+  justify-content: space-around;
   align-items: center;
   width: 100%;
   height: 100%;
-  padding: 10px;
-  gap: 8px;
+  padding: 12px;
+  gap: 12px;
 }
 
 .formation-row {
@@ -669,7 +692,7 @@ body {
   min-width: 100px;
   max-width: 120px;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-  cursor: grab;
+  cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
   border: 3px solid transparent;
 }
@@ -692,6 +715,12 @@ body {
 .player-card.white-team {
   border-color: var(--text-dark);
   background: linear-gradient(to bottom, rgba(26, 26, 26, 0.15) 0%, rgba(255, 255, 255, 0.98) 30%);
+}
+
+.player-card.swap-selected {
+  box-shadow: 0 6px 18px rgba(26, 71, 42, 0.4);
+  border-color: var(--primary-green);
+  transform: scale(1.05);
 }
 
 .player-photo-container {
@@ -722,6 +751,22 @@ body {
   font-size: 0.7rem;
   font-weight: 700;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.swap-indicator {
+  position: absolute;
+  bottom: -6px;
+  right: -6px;
+  background: var(--primary-green);
+  color: white;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 .player-name {
@@ -1179,6 +1224,11 @@ body {
   margin-bottom: 32px;
 }
 
+.player-form-inline {
+  grid-column: 1 / -1;
+  margin-bottom: 16px;
+}
+
 .player-form-container h2 {
   color: var(--primary-green);
   margin-bottom: 20px;
@@ -1440,6 +1490,10 @@ body {
   gap: 16px;
 }
 
+.player-card-wrapper {
+  display: contents;
+}
+
 .player-card-config {
   background: var(--bg-white);
   border-radius: 12px;
@@ -1448,6 +1502,12 @@ body {
   display: flex;
   gap: 16px;
   align-items: center;
+}
+
+.player-card-config.editing {
+  border: 2px solid var(--primary-green);
+  box-shadow: 0 6px 18px rgba(26, 71, 42, 0.2);
+  background: rgba(26, 71, 42, 0.05);
 }
 
 .player-config-photo {
@@ -1492,6 +1552,13 @@ body {
 .player-ovr {
   font-weight: 700;
   color: var(--primary-green);
+}
+
+.editing-indicator {
+  margin-top: 6px;
+  color: var(--primary-green);
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
 .player-config-actions {
@@ -1710,7 +1777,7 @@ body {
   .football-pitch {
     width: 100%;
     max-width: 360px;
-    height: 540px;
+    height: 600px;
   }
 
   .player-card {

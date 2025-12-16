@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import logo from '../assets/logo.png';
+import { APP_VERSION } from '../version';
 
 export function Layout() {
   const { logout } = useAuth();
@@ -31,7 +32,7 @@ export function Layout() {
         <Outlet />
       </main>
       <footer className="app-footer">
-        <p>OssMNF v0.0.1</p>
+        <p>OssMNF v{APP_VERSION}</p>
       </footer>
     </div>
   );

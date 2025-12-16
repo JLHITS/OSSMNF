@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import logo from '../assets/logo.png';
+import { APP_VERSION } from '../version';
 
 export function Login() {
   const [password, setPassword] = useState('');
@@ -38,7 +39,7 @@ export function Login() {
             Enter
           </button>
         </form>
-        <p className="version">v0.0.1</p>
+        <p className="version">v{APP_VERSION}</p>
       </div>
     </div>
   );

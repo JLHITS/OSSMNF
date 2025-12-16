@@ -29,7 +29,7 @@ export async function uploadImageToCloudinary(
     throw new Error(`Failed to get upload signature: ${error.error || 'Unknown error'}`);
   }
 
-  const { signature, timestamp, publicId, cloudName, apiKey } = await signatureResponse.json();
+  const { signature, timestamp, publicId, cloudName, apiKey, uploadPreset } = await signatureResponse.json();
 
   // Upload to Cloudinary with signature
   const formData = new FormData();
@@ -38,7 +38,7 @@ export async function uploadImageToCloudinary(
   formData.append('timestamp', timestamp.toString());
   formData.append('signature', signature);
   formData.append('public_id', publicId);
-  formData.append('folder', 'ossmnf-players');
+  formData.append('upload_preset', uploadPreset || 'player_avatars');
 
   const uploadResponse = await fetch(
     `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,

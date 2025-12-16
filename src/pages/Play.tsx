@@ -356,7 +356,7 @@ export function Play() {
           </div>
 
           <p className="drag-hint">
-            Drag players between teams to swap positions.
+            Tap/click a player, then another to swap them. Tap again to deselect.
           </p>
         </div>
       )}
