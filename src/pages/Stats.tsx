@@ -51,11 +51,17 @@ export function Stats() {
       })
       .filter((stat) => stat.totalMatches > 0)
       .sort((a, b) => {
-        // Sort by win percentage, then by total matches
+        // Sort by: 1) Win %, 2) Wins, 3) Games played, 4) Goals
         if (b.winPercentage !== a.winPercentage) {
           return b.winPercentage - a.winPercentage;
         }
-        return b.totalMatches - a.totalMatches;
+        if (b.wins !== a.wins) {
+          return b.wins - a.wins;
+        }
+        if (b.totalMatches !== a.totalMatches) {
+          return b.totalMatches - a.totalMatches;
+        }
+        return b.goals - a.goals;
       });
   }, [players, matches]);
 
