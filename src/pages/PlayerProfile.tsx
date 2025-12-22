@@ -67,20 +67,20 @@ export function PlayerProfile() {
     const teamColorRecord = calculateTeamColorRecord(player.id, matches);
     const achievementsWithDates = calculateAchievementDates(player.id, matches);
 
-    // Find nemesis (opponent they lose to most, min 2 matches)
+    // Find nemesis (opponent they lose to most, must have at least 1 loss against them)
     const nemesis = opponentRecords
-      .filter((r) => r.totalMatches >= 2)
-      .sort((a, b) => b.lossesAgainst - a.lossesAgainst)[0] || null;
+      .filter((r) => r.lossesAgainst >= 1)
+      .sort((a, b) => b.lossesAgainst - a.lossesAgainst || b.totalMatches - a.totalMatches)[0] || null;
 
-    // Find victim (opponent they beat most, min 2 matches)
+    // Find victim (opponent they beat most, must have at least 1 win against them)
     const victim = opponentRecords
-      .filter((r) => r.totalMatches >= 2)
-      .sort((a, b) => b.winsAgainst - a.winsAgainst)[0] || null;
+      .filter((r) => r.winsAgainst >= 1)
+      .sort((a, b) => b.winsAgainst - a.winsAgainst || b.totalMatches - a.totalMatches)[0] || null;
 
-    // Find best teammate (highest win% with, min 3 matches together)
+    // Find best teammate (highest win% with, min 1 match together)
     const bestTeammate = teammateRecords
-      .filter((r) => r.totalMatches >= 3)
-      .sort((a, b) => b.winPercentage - a.winPercentage)[0] || null;
+      .filter((r) => r.totalMatches >= 1)
+      .sort((a, b) => b.winPercentage - a.winPercentage || b.totalMatches - a.totalMatches)[0] || null;
 
     // Get player's matches for history
     const playerMatches = matches
