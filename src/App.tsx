@@ -7,6 +7,7 @@ import { Play } from './pages/Play';
 import { Results } from './pages/Results';
 import { Stats } from './pages/Stats';
 import { Configuration } from './pages/Configuration';
+import { PlayerProfile } from './pages/PlayerProfile';
 import './App.css';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -27,6 +28,14 @@ function AppRoutes() {
       <Route
         path="/login"
         element={isAuthenticated ? <Navigate to="/play" replace /> : <Login />}
+      />
+      <Route
+        path="/player/:playerSlug"
+        element={
+          <DataProvider>
+            <PlayerProfile />
+          </DataProvider>
+        }
       />
       <Route
         path="/"

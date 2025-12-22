@@ -67,6 +67,40 @@ export interface Achievement {
   icon: string;
 }
 
+export interface AchievementWithDate extends Achievement {
+  unlockedAt: Date;
+}
+
+export interface OpponentRecord {
+  oddsPlayerId: string;
+  opponentName: string;
+  opponentPhotoUrl: string;
+  winsAgainst: number;
+  lossesAgainst: number;
+  draws: number;
+  totalMatches: number;
+}
+
+export interface TeammateRecord {
+  oddsPlayerId: string;
+  teammateName: string;
+  teammatePhotoUrl: string;
+  wins: number;
+  losses: number;
+  draws: number;
+  totalMatches: number;
+  winPercentage: number;
+}
+
+export interface BiggestResult {
+  matchId: string;
+  date: Date;
+  margin: number;
+  myScore: number;
+  opponentScore: number;
+  team: 'red' | 'white';
+}
+
 export interface AppState {
   isAuthenticated: boolean;
   players: Player[];

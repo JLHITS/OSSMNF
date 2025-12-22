@@ -1,4 +1,4 @@
-import type { Player, Position, TeamPlayer, MatchSize, Match } from '../types';
+import type { Player, Position, TeamPlayer, MatchSize, Match, OpponentRecord, TeammateRecord, BiggestResult } from '../types';
 
 export function calculateOVR(
   fitness: number,
@@ -252,4 +252,216 @@ export function calculateLongestWinStreak(playerId: string, matches: Match[]): n
   }
 
   return longestStreak;
+}
+
+/**
+ * Calculate opponent records for a player (for nemesis/victim)
+ * Returns records for all opponents with at least 1 match against them
+ */
+export function calculateOpponentRecords(
+  playerId: string,
+  matches: Match[],
+  players: Player[]
+): OpponentRecord[] {
+  const opponentMap = new Map<string, { winsAgainst: number; lossesAgainst: number; draws: number }>();
+
+  // Process completed matches where player participated
+  matches
+    .filter((match) => match.status === 'completed')
+    .forEach((match) => {
+      const inRed = match.redTeam.some((p) => p.id === playerId);
+      const inWhite = match.whiteTeam.some((p) => p.id === playerId);
+      if (!inRed && !inWhite) return;
+
+      if (match.redScore === null || match.whiteScore === null) return;
+
+      const opponentTeam = inRed ? match.whiteTeam : match.redTeam;
+      const myScore = inRed ? match.redScore : match.whiteScore;
+      const opponentScore = inRed ? match.whiteScore : match.redScore;
+
+      const won = myScore > opponentScore;
+      const lost = myScore < opponentScore;
+      const drew = myScore === opponentScore;
+
+      // Track record against each opponent
+      opponentTeam.forEach((opponent) => {
+        const current = opponentMap.get(opponent.id) || { winsAgainst: 0, lossesAgainst: 0, draws: 0 };
+        if (won) current.winsAgainst++;
+        if (lost) current.lossesAgainst++;
+        if (drew) current.draws++;
+        opponentMap.set(opponent.id, current);
+      });
+    });
+
+  // Convert to array with player info
+  const records: OpponentRecord[] = [];
+  opponentMap.forEach((stats, oddsPlayerId) => {
+    const player = players.find((p) => p.id === oddsPlayerId);
+    if (player) {
+      records.push({
+        oddsPlayerId,
+        opponentName: player.name,
+        opponentPhotoUrl: player.photoUrl,
+        winsAgainst: stats.winsAgainst,
+        lossesAgainst: stats.lossesAgainst,
+        draws: stats.draws,
+        totalMatches: stats.winsAgainst + stats.lossesAgainst + stats.draws,
+      });
+    }
+  });
+
+  return records;
+}
+
+/**
+ * Calculate teammate records for a player (for best teammate)
+ * Returns records for all teammates with at least 1 match together
+ */
+export function calculateTeammateRecords(
+  playerId: string,
+  matches: Match[],
+  players: Player[]
+): TeammateRecord[] {
+  const teammateMap = new Map<string, { wins: number; losses: number; draws: number }>();
+
+  // Process completed matches where player participated
+  matches
+    .filter((match) => match.status === 'completed')
+    .forEach((match) => {
+      const inRed = match.redTeam.some((p) => p.id === playerId);
+      const inWhite = match.whiteTeam.some((p) => p.id === playerId);
+      if (!inRed && !inWhite) return;
+
+      if (match.redScore === null || match.whiteScore === null) return;
+
+      const myTeam = inRed ? match.redTeam : match.whiteTeam;
+      const myScore = inRed ? match.redScore : match.whiteScore;
+      const opponentScore = inRed ? match.whiteScore : match.redScore;
+
+      const won = myScore > opponentScore;
+      const lost = myScore < opponentScore;
+      const drew = myScore === opponentScore;
+
+      // Track record with each teammate (excluding self)
+      myTeam.forEach((teammate) => {
+        if (teammate.id === playerId) return;
+
+        const current = teammateMap.get(teammate.id) || { wins: 0, losses: 0, draws: 0 };
+        if (won) current.wins++;
+        if (lost) current.losses++;
+        if (drew) current.draws++;
+        teammateMap.set(teammate.id, current);
+      });
+    });
+
+  // Convert to array with player info
+  const records: TeammateRecord[] = [];
+  teammateMap.forEach((stats, oddsPlayerId) => {
+    const player = players.find((p) => p.id === oddsPlayerId);
+    if (player) {
+      const totalMatches = stats.wins + stats.losses + stats.draws;
+      records.push({
+        oddsPlayerId,
+        teammateName: player.name,
+        teammatePhotoUrl: player.photoUrl,
+        wins: stats.wins,
+        losses: stats.losses,
+        draws: stats.draws,
+        totalMatches,
+        winPercentage: totalMatches > 0 ? Math.round((stats.wins / totalMatches) * 100) : 0,
+      });
+    }
+  });
+
+  return records;
+}
+
+/**
+ * Find the biggest win and biggest loss for a player
+ */
+export function findBiggestResults(
+  playerId: string,
+  matches: Match[]
+): { biggestWin: BiggestResult | null; biggestLoss: BiggestResult | null } {
+  let biggestWin: BiggestResult | null = null;
+  let biggestLoss: BiggestResult | null = null;
+
+  matches
+    .filter((match) => match.status === 'completed')
+    .forEach((match) => {
+      const inRed = match.redTeam.some((p) => p.id === playerId);
+      const inWhite = match.whiteTeam.some((p) => p.id === playerId);
+      if (!inRed && !inWhite) return;
+
+      if (match.redScore === null || match.whiteScore === null) return;
+
+      const myScore = inRed ? match.redScore : match.whiteScore;
+      const opponentScore = inRed ? match.whiteScore : match.redScore;
+      const margin = myScore - opponentScore;
+
+      if (margin > 0) {
+        // Win
+        if (!biggestWin || margin > biggestWin.margin) {
+          biggestWin = {
+            matchId: match.id,
+            date: match.date,
+            margin,
+            myScore,
+            opponentScore,
+            team: inRed ? 'red' : 'white',
+          };
+        }
+      } else if (margin < 0) {
+        // Loss
+        const lossMargin = Math.abs(margin);
+        if (!biggestLoss || lossMargin > biggestLoss.margin) {
+          biggestLoss = {
+            matchId: match.id,
+            date: match.date,
+            margin: lossMargin,
+            myScore,
+            opponentScore,
+            team: inRed ? 'red' : 'white',
+          };
+        }
+      }
+    });
+
+  return { biggestWin, biggestLoss };
+}
+
+/**
+ * Calculate red team vs white team record for a player
+ */
+export function calculateTeamColorRecord(
+  playerId: string,
+  matches: Match[]
+): { redWins: number; redLosses: number; redDraws: number; whiteWins: number; whiteLosses: number; whiteDraws: number } {
+  let redWins = 0, redLosses = 0, redDraws = 0;
+  let whiteWins = 0, whiteLosses = 0, whiteDraws = 0;
+
+  matches
+    .filter((match) => match.status === 'completed')
+    .forEach((match) => {
+      const inRed = match.redTeam.some((p) => p.id === playerId);
+      const inWhite = match.whiteTeam.some((p) => p.id === playerId);
+      if (!inRed && !inWhite) return;
+
+      if (match.redScore === null || match.whiteScore === null) return;
+
+      const myScore = inRed ? match.redScore : match.whiteScore;
+      const opponentScore = inRed ? match.whiteScore : match.redScore;
+
+      if (inRed) {
+        if (myScore > opponentScore) redWins++;
+        else if (myScore < opponentScore) redLosses++;
+        else redDraws++;
+      } else {
+        if (myScore > opponentScore) whiteWins++;
+        else if (myScore < opponentScore) whiteLosses++;
+        else whiteDraws++;
+      }
+    });
+
+  return { redWins, redLosses, redDraws, whiteWins, whiteLosses, whiteDraws };
 }

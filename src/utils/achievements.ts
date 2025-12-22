@@ -1,4 +1,4 @@
-import type { Achievement, Match } from '../types';
+import type { Achievement, AchievementWithDate, Match } from '../types';
 import { calculateLongestWinStreak } from './calculations';
 
 // Badge definitions
@@ -84,4 +84,118 @@ export function getBadgeById(id: string): Achievement | undefined {
 
 export function getAllBadges(): Achievement[] {
   return [...BADGES];
+}
+
+/**
+ * Calculate achievement dates by processing matches chronologically
+ * Returns achievements with the date they were unlocked
+ */
+export function calculateAchievementDates(
+  playerId: string,
+  matches: Match[]
+): AchievementWithDate[] {
+  const achievementsWithDates: AchievementWithDate[] = [];
+  const unlockedIds = new Set<string>();
+
+  // Sort matches by date ascending
+  const sortedMatches = [...matches]
+    .filter((m) => m.status === 'completed')
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  // Running totals
+  let wins = 0;
+  let losses = 0;
+  let draws = 0;
+  let goals = 0;
+  let captainCount = 0;
+  let currentWinStreak = 0;
+  let longestWinStreak = 0;
+
+  const addAchievement = (id: string, date: Date) => {
+    if (unlockedIds.has(id)) return;
+    const badge = BADGES.find((b) => b.id === id);
+    if (badge) {
+      achievementsWithDates.push({ ...badge, unlockedAt: date });
+      unlockedIds.add(id);
+    }
+  };
+
+  for (const match of sortedMatches) {
+    const inRed = match.redTeam.some((p) => p.id === playerId);
+    const inWhite = match.whiteTeam.some((p) => p.id === playerId);
+    if (!inRed && !inWhite) continue;
+
+    if (match.redScore === null || match.whiteScore === null) continue;
+
+    const myScore = inRed ? match.redScore : match.whiteScore;
+    const opponentScore = inRed ? match.whiteScore : match.redScore;
+    const matchDate = new Date(match.date);
+
+    // Check captain status
+    const playerInTeam = inRed
+      ? match.redTeam.find((p) => p.id === playerId)
+      : match.whiteTeam.find((p) => p.id === playerId);
+    if (playerInTeam?.isCaptain) {
+      captainCount++;
+    }
+
+    // Count goals
+    const scorers = inRed ? match.redScorers : match.whiteScorers;
+    const matchGoals = scorers.filter((id) => id === playerId).length;
+    goals += matchGoals;
+
+    // Determine result
+    if (myScore > opponentScore) {
+      wins++;
+      currentWinStreak++;
+      longestWinStreak = Math.max(longestWinStreak, currentWinStreak);
+    } else if (myScore < opponentScore) {
+      losses++;
+      currentWinStreak = 0;
+    } else {
+      draws++;
+      currentWinStreak = 0;
+    }
+
+    const totalMatches = wins + losses + draws;
+    const winPercentage = totalMatches > 0 ? (wins / totalMatches) * 100 : 0;
+
+    // Check for unlocked achievements after this match
+
+    // Match milestones
+    if (totalMatches >= 1) addAchievement('debut', matchDate);
+    if (totalMatches >= 10) addAchievement('regular-10', matchDate);
+    if (totalMatches >= 25) addAchievement('veteran-25', matchDate);
+    if (totalMatches >= 100) addAchievement('centurion-100', matchDate);
+
+    // Win milestones
+    if (wins >= 1) addAchievement('first-win', matchDate);
+    if (wins >= 10) addAchievement('winner-10', matchDate);
+    if (wins >= 25) addAchievement('champion-25', matchDate);
+    if (wins >= 50) addAchievement('legend-50', matchDate);
+
+    // Goal milestones
+    if (goals >= 1) addAchievement('off-the-mark', matchDate);
+    if (goals >= 10) addAchievement('scorer-10', matchDate);
+    if (goals >= 25) addAchievement('sharpshooter-25', matchDate);
+    if (goals >= 50) addAchievement('prolific-50', matchDate);
+
+    // Streak achievement
+    if (longestWinStreak >= 5) addAchievement('hot-streak-5', matchDate);
+
+    // Undefeated
+    if (totalMatches >= 10 && losses === 0) addAchievement('undefeated', matchDate);
+
+    // Consistent
+    if (totalMatches >= 10 && winPercentage >= 70) addAchievement('consistent', matchDate);
+
+    // Captain badges
+    if (captainCount >= 5) addAchievement('leader-5', matchDate);
+    if (captainCount >= 15) addAchievement('captain-marvel-15', matchDate);
+  }
+
+  // Sort by date unlocked
+  achievementsWithDates.sort((a, b) => new Date(a.unlockedAt).getTime() - new Date(b.unlockedAt).getTime());
+
+  return achievementsWithDates;
 }

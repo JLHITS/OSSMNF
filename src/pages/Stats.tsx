@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { calculatePlayerStats } from '../services/firebase';
 import { calculatePlayerForm } from '../utils/calculations';
 import { calculatePlayerAchievements } from '../utils/achievements';
 import { getCloudinaryImageUrl } from '../services/cloudinary';
+import { createPlayerSlug } from './PlayerProfile';
 import type { PlayerStats, Achievement } from '../types';
 import placeholder from '../assets/placeholder.png';
 
@@ -141,7 +143,12 @@ export function Stats() {
                           }}
                         />
                         <div className="player-name-badges">
-                          <span className="player-name">{stat.playerName}</span>
+                          <Link
+                            to={`/player/${createPlayerSlug(stat.playerName)}`}
+                            className="player-name player-name-link"
+                          >
+                            {stat.playerName}
+                          </Link>
                           {stat.achievements.length > 0 && (
                             <div className="badges-row">
                               {stat.achievements.slice(0, 5).map((badge) => (
