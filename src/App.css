@@ -2485,8 +2485,16 @@ h1, h2, h3 {
   min-height: 100vh;
   background: linear-gradient(135deg, #f8faf8 0%, #e8f0e8 100%);
   padding: 20px;
-  max-width: 800px;
+  max-width: 500px;
   margin: 0 auto;
+}
+
+/* Desktop layout for profile */
+@media (min-width: 768px) {
+  .profile-page {
+    max-width: 1100px;
+    padding: 40px 60px;
+  }
 }
 
 .profile-loading,
@@ -3067,6 +3075,99 @@ h1, h2, h3 {
 .player-name-link:hover {
   color: var(--accent-teal);
   text-decoration: underline;
+}
+
+/* Desktop Enhancements for Profile */
+@media (min-width: 768px) {
+  .profile-header {
+    padding: 32px 40px;
+    gap: 30px;
+  }
+
+  .profile-photo-large {
+    width: 150px;
+    height: 150px;
+  }
+
+  .profile-name {
+    font-size: 2.5rem;
+  }
+
+  .profile-section {
+    padding: 28px;
+  }
+
+  .profile-section h2 {
+    font-size: 1.25rem;
+  }
+
+  /* Stats in a single row on desktop */
+  .stats-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .stat-value {
+    font-size: 2.2rem;
+  }
+
+  /* Form blocks larger on desktop */
+  .form-block {
+    width: 52px;
+    height: 52px;
+    font-size: 1.3rem;
+  }
+
+  /* Rivalry cards in a row */
+  .rivalry-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .rivalry-card {
+    padding: 24px;
+  }
+
+  .rivalry-photo {
+    width: 80px;
+    height: 80px;
+  }
+
+  .rivalry-name {
+    font-size: 1.1rem;
+  }
+
+  /* Extra stats in 2-3 columns */
+  .extra-stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* Achievements in 3 columns */
+  .achievements-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .achievement-card {
+    padding: 18px;
+  }
+
+  .achievement-icon {
+    font-size: 2.2rem;
+  }
+
+  /* Match history wider */
+  .match-history-header {
+    padding: 16px 24px;
+    gap: 16px;
+  }
+
+  .match-date {
+    min-width: 100px;
+  }
+
+  .match-history-details {
+    padding: 24px;
+  }
 }
 
 /* Mobile Responsiveness for Profile */

@@ -170,15 +170,6 @@ export function PlayerProfile() {
     goalsPerGame,
   } = profileData;
 
-  const getPositionLabel = (position: string) => {
-    switch (position) {
-      case 'DEF': return 'Defender';
-      case 'ATT': return 'Attacker';
-      case 'ALR': return 'All-Rounder';
-      default: return position;
-    }
-  };
-
   return (
     <div className="profile-page">
       {/* Header */}
@@ -193,17 +184,13 @@ export function PlayerProfile() {
         />
         <div className="profile-header-info">
           <h1 className="profile-name">{player.name}</h1>
-          <div className="profile-badges">
-            <span className={`position-badge position-${player.position.toLowerCase()}`}>
-              {getPositionLabel(player.position)}
-            </span>
-            <span className="ovr-badge">{player.ovr} OVR</span>
-            {captainCount > 0 && (
+          {captainCount > 0 && (
+            <div className="profile-badges">
               <span className="captain-count-badge" title={`Captain ${captainCount} times`}>
-                C x{captainCount}
+                Captain x{captainCount}
               </span>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
