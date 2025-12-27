@@ -3,8 +3,10 @@ import html2canvas from 'html2canvas';
 import { useData } from '../context/DataContext';
 import { FootballPitch } from '../components/FootballPitch';
 import { Alert, Confirm } from '../components/Modal';
-import type { TeamPlayer, MatchSize, Player, AvailabilityStatus } from '../types';
+import { LoadingOverlay } from '../components/LoadingOverlay';
+import type { TeamPlayer, MatchSize, Player, AvailabilityStatus, TeamGenerationAlgorithm } from '../types';
 import { generateBalancedTeams, getTeamSize, calculateTeamOVR } from '../utils/calculations';
+import { generateConstraintOptimizedTeams, generateILPOptimizedTeams } from '../utils/teamAlgorithms';
 import { createMatch, resetAllAvailability } from '../services/firebase';
 import { getCloudinaryImageUrl } from '../services/cloudinary';
 import placeholder from '../assets/placeholder.png';
@@ -58,6 +60,18 @@ export function Play() {
   // Reserve management state
   const [selectedReserveId, setSelectedReserveId] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
+
+  // Algorithm selection state
+  const [selectedAlgorithm, setSelectedAlgorithm] = useState<TeamGenerationAlgorithm>(() => {
+    const saved = localStorage.getItem('ossmnf_algorithm_preference');
+    return (saved as TeamGenerationAlgorithm) || 'snake-draft';
+  });
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // Save algorithm preference to localStorage
+  useEffect(() => {
+    localStorage.setItem('ossmnf_algorithm_preference', selectedAlgorithm);
+  }, [selectedAlgorithm]);
 
   // Save to localStorage whenever teams or matchSize changes
   useEffect(() => {
@@ -267,7 +281,7 @@ export function Play() {
     setSelectedPlayerIds(new Set());
   };
 
-  const handleGenerateTeams = () => {
+  const handleGenerateTeams = async () => {
     setError(null);
     const selectedPlayers = players.filter((p) => selectedPlayerIds.has(p.id));
 
@@ -277,15 +291,40 @@ export function Play() {
     }
 
     try {
-      const { redTeam: newRedTeam, whiteTeam: newWhiteTeam } = generateBalancedTeams(
-        selectedPlayers,
-        teamSize
-      );
+      // Show loading for slower algorithms
+      if (selectedAlgorithm !== 'snake-draft') {
+        setIsGenerating(true);
+        // Small delay to ensure loading overlay renders
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+
+      let newRedTeam: TeamPlayer[];
+      let newWhiteTeam: TeamPlayer[];
+
+      if (selectedAlgorithm === 'snake-draft') {
+        // Use existing fast algorithm
+        const result = generateBalancedTeams(selectedPlayers, teamSize);
+        newRedTeam = result.redTeam;
+        newWhiteTeam = result.whiteTeam;
+      } else if (selectedAlgorithm === 'constraint-opt') {
+        // Use constraint optimizer with simulated annealing
+        const result = generateConstraintOptimizedTeams(selectedPlayers, teamSize);
+        newRedTeam = result.redTeam;
+        newWhiteTeam = result.whiteTeam;
+      } else {
+        // Use ILP solver optimizer
+        const result = generateILPOptimizedTeams(selectedPlayers, teamSize);
+        newRedTeam = result.redTeam;
+        newWhiteTeam = result.whiteTeam;
+      }
+
       setRedTeam(newRedTeam);
       setWhiteTeam(newWhiteTeam);
       setTeamsGenerated(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate teams');
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -643,13 +682,33 @@ ${whiteList}`;
 
           {error && <p className="error-message">{error}</p>}
 
+          {/* Algorithm Selection */}
+          <div className="algorithm-selector">
+            <label htmlFor="algorithm">Team Generation Method:</label>
+            <select
+              id="algorithm"
+              value={selectedAlgorithm}
+              onChange={(e) => setSelectedAlgorithm(e.target.value as TeamGenerationAlgorithm)}
+              disabled={isGenerating}
+            >
+              <option value="snake-draft">Balanced Snake Draft (Fast)</option>
+              <option value="constraint-opt">Constraint Optimiser (Multi-Attribute)</option>
+              <option value="ilp-solver">Solver Optimiser (ILP)</option>
+            </select>
+            <span className="algorithm-hint">
+              {selectedAlgorithm === 'snake-draft' && 'Quick balanced team generation using snake draft and OVR balancing'}
+              {selectedAlgorithm === 'constraint-opt' && 'Optimises for multiple attributes (OVR, Work Rate, Attack, Defence, Ball Use) using simulated annealing'}
+              {selectedAlgorithm === 'ilp-solver' && 'Mathematical optimisation for best possible balance across all attributes'}
+            </span>
+          </div>
+
           <button
             onClick={handleGenerateTeams}
-            disabled={selectedPlayerIds.size !== requiredPlayers}
+            disabled={selectedPlayerIds.size !== requiredPlayers || isGenerating}
             className="btn btn-primary generate-btn"
             data-emoji="🧠"
           >
-            Generate Teams
+            {isGenerating ? 'Generating...' : 'Generate Teams'}
           </button>
         </div>
       ) : (
@@ -755,6 +814,12 @@ ${whiteList}`;
           type="confirm"
         />
       )}
+
+      {/* Loading Overlay for slower algorithms */}
+      <LoadingOverlay
+        isVisible={isGenerating}
+        message="Teams are being generated..."
+      />
     </div>
   );
 }

@@ -3243,3 +3243,144 @@ h1, h2, h3 {
     gap: 16px;
   }
 }
+
+/* ==================== ALGORITHM SELECTOR ==================== */
+.algorithm-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--bg-white);
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+  box-shadow: 0 2px 8px var(--shadow-light);
+}
+
+.algorithm-selector label {
+  font-weight: 600;
+  color: var(--text-dark);
+  font-size: 0.95rem;
+}
+
+.algorithm-selector select {
+  padding: 12px 16px;
+  border: 2px solid var(--border-light);
+  border-radius: 8px;
+  font-size: 1rem;
+  background: var(--bg-white);
+  cursor: pointer;
+  transition: border-color 0.2s;
+  color: var(--text-dark);
+}
+
+.algorithm-selector select:focus {
+  outline: none;
+  border-color: var(--primary-green);
+}
+
+.algorithm-selector select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--bg-light);
+}
+
+.algorithm-hint {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* ==================== LOADING OVERLAY ==================== */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.loading-content {
+  background: var(--bg-white);
+  border-radius: 16px;
+  padding: 40px 60px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  max-width: 90%;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--border-light);
+  border-top-color: var(--primary-green);
+  border-radius: 50%;
+  margin: 0 auto 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-message {
+  color: var(--text-dark);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.loading-hint {
+  color: var(--text-light);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Mobile responsive adjustments for algorithm selector */
+@media (max-width: 768px) {
+  .algorithm-selector {
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+
+  .algorithm-selector select {
+    padding: 10px 14px;
+    font-size: 0.95rem;
+  }
+
+  .algorithm-hint {
+    font-size: 0.8rem;
+  }
+
+  .loading-content {
+    padding: 30px 40px;
+    margin: 20px;
+  }
+
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+  }
+
+  .loading-message {
+    font-size: 1rem;
+  }
+}

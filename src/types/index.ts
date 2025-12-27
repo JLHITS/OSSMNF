@@ -116,3 +116,46 @@ export interface PlayerAvailability {
   reserveOrder: number | null; // 1-8 for reserves, null for playing squad
   updatedAt: Date;
 }
+
+// Team generation algorithm types
+export type TeamGenerationAlgorithm =
+  | 'snake-draft'      // Current balanced snake draft (fast)
+  | 'constraint-opt'   // Constraint optimizer with simulated annealing
+  | 'ilp-solver';      // Integer Linear Programming solver
+
+export interface AlgorithmConfig {
+  maxIterations?: number;
+  temperature?: number;
+  coolingRate?: number;
+  minPositions?: { DEF: number; ATT: number; ALR: number };
+  weights?: {
+    ovr: number;
+    fitness: number;
+    attack: number;
+    defence: number;
+    ballUse: number;
+    topHeaviness: number;
+    positionViolation: number;
+  };
+}
+
+export interface FairnessMetrics {
+  ovrDiff: number;
+  fitnessDiff: number;
+  attackDiff: number;
+  defenceDiff: number;
+  ballUseDiff: number;
+  topHeavinessDiff: number;
+  positionViolations: number;
+}
+
+export interface TeamGenerationResult {
+  redTeam: TeamPlayer[];
+  whiteTeam: TeamPlayer[];
+  metadata?: {
+    algorithm: TeamGenerationAlgorithm;
+    fairnessScore?: number;
+    iterations?: number;
+    timeMs?: number;
+  };
+}
