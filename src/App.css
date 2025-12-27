@@ -3292,6 +3292,120 @@ h1, h2, h3 {
   line-height: 1.4;
 }
 
+.algorithm-label-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.algorithm-info-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  opacity: 0.7;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.algorithm-info-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.algorithm-comparison-tooltip {
+  position: relative;
+  margin-top: 12px;
+  padding: 16px;
+  background: var(--bg-light);
+  border: 2px solid var(--primary-green);
+  border-radius: 10px;
+  box-shadow: 0 4px 12px var(--shadow-medium);
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.tooltip-header h4 {
+  margin: 0;
+  color: var(--primary-green);
+  font-size: 1rem;
+}
+
+.tooltip-close {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+  color: var(--text-medium);
+  transition: color 0.2s;
+}
+
+.tooltip-close:hover {
+  color: var(--text-dark);
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.comparison-table th {
+  background: var(--primary-green);
+  color: white;
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.comparison-table th:first-child {
+  border-top-left-radius: 6px;
+}
+
+.comparison-table th:last-child {
+  border-top-right-radius: 6px;
+}
+
+.comparison-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-dark);
+}
+
+.comparison-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.comparison-table tbody tr:nth-child(even) {
+  background: rgba(26, 71, 42, 0.03);
+}
+
+.comparison-table td:first-child {
+  font-weight: 600;
+  color: var(--text-medium);
+}
+
 /* ==================== LOADING OVERLAY ==================== */
 .loading-overlay {
   position: fixed;
@@ -3368,6 +3482,23 @@ h1, h2, h3 {
 
   .algorithm-hint {
     font-size: 0.8rem;
+  }
+
+  .algorithm-comparison-tooltip {
+    padding: 12px;
+  }
+
+  .comparison-table {
+    font-size: 0.75rem;
+  }
+
+  .comparison-table th,
+  .comparison-table td {
+    padding: 6px 8px;
+  }
+
+  .comparison-table th {
+    font-size: 0.7rem;
   }
 
   .loading-content {

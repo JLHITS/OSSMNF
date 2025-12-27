@@ -64,9 +64,10 @@ export function Play() {
   // Algorithm selection state
   const [selectedAlgorithm, setSelectedAlgorithm] = useState<TeamGenerationAlgorithm>(() => {
     const saved = localStorage.getItem('ossmnf_algorithm_preference');
-    return (saved as TeamGenerationAlgorithm) || 'snake-draft';
+    return (saved as TeamGenerationAlgorithm) || 'ilp-solver';
   });
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showAlgorithmInfo, setShowAlgorithmInfo] = useState(false);
 
   // Save algorithm preference to localStorage
   useEffect(() => {
@@ -684,22 +685,96 @@ ${whiteList}`;
 
           {/* Algorithm Selection */}
           <div className="algorithm-selector">
-            <label htmlFor="algorithm">Team Generation Method:</label>
+            <div className="algorithm-label-row">
+              <label htmlFor="algorithm">Team Generation Method:</label>
+              <button
+                type="button"
+                className="algorithm-info-btn"
+                onClick={() => setShowAlgorithmInfo(!showAlgorithmInfo)}
+                title="Compare methods"
+              >
+                ℹ️
+              </button>
+            </div>
             <select
               id="algorithm"
               value={selectedAlgorithm}
               onChange={(e) => setSelectedAlgorithm(e.target.value as TeamGenerationAlgorithm)}
               disabled={isGenerating}
             >
-              <option value="snake-draft">Balanced Snake Draft (Fast)</option>
-              <option value="constraint-opt">Constraint Optimiser (Multi-Attribute)</option>
-              <option value="ilp-solver">Solver Optimiser (ILP)</option>
+              <option value="snake-draft">⚡ Counter-Attack</option>
+              <option value="constraint-opt">⚙️ Possession Play</option>
+              <option value="ilp-solver">🏆 Total Football</option>
             </select>
             <span className="algorithm-hint">
-              {selectedAlgorithm === 'snake-draft' && 'Quick balanced team generation using snake draft and OVR balancing'}
-              {selectedAlgorithm === 'constraint-opt' && 'Optimises for multiple attributes (OVR, Work Rate, Attack, Defence, Ball Use) using simulated annealing'}
-              {selectedAlgorithm === 'ilp-solver' && 'Mathematical optimisation for best possible balance across all attributes'}
+              {selectedAlgorithm === 'snake-draft' && 'Quick and direct - balanced teams using snake draft'}
+              {selectedAlgorithm === 'constraint-opt' && 'Methodical approach - optimises all attributes with intelligent swaps'}
+              {selectedAlgorithm === 'ilp-solver' && 'Perfect balance - mathematical optimisation across all dimensions'}
             </span>
+
+            {/* Comparison Tooltip */}
+            {showAlgorithmInfo && (
+              <div className="algorithm-comparison-tooltip">
+                <div className="tooltip-header">
+                  <h4>Method Comparison</h4>
+                  <button
+                    type="button"
+                    className="tooltip-close"
+                    onClick={() => setShowAlgorithmInfo(false)}
+                  >
+                    ✕
+                  </button>
+                </div>
+                <table className="comparison-table">
+                  <thead>
+                    <tr>
+                      <th>Feature</th>
+                      <th>⚡ Counter-Attack</th>
+                      <th>⚙️ Possession Play</th>
+                      <th>🏆 Total Football</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Speed</td>
+                      <td>~10ms</td>
+                      <td>~200ms</td>
+                      <td>~500ms</td>
+                    </tr>
+                    <tr>
+                      <td>OVR Balance</td>
+                      <td>Good</td>
+                      <td>Excellent</td>
+                      <td>Optimal</td>
+                    </tr>
+                    <tr>
+                      <td>Multi-attribute</td>
+                      <td>OVR only</td>
+                      <td>All 5 attrs</td>
+                      <td>All 5 attrs</td>
+                    </tr>
+                    <tr>
+                      <td>Position Balance</td>
+                      <td>Basic</td>
+                      <td>Configurable</td>
+                      <td>Hard constraint</td>
+                    </tr>
+                    <tr>
+                      <td>Elite Distribution</td>
+                      <td>No</td>
+                      <td>Yes</td>
+                      <td>Yes (2-2 split)</td>
+                    </tr>
+                    <tr>
+                      <td>Guaranteed Optimal</td>
+                      <td>No</td>
+                      <td>No</td>
+                      <td>Yes (if feasible)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           <button
