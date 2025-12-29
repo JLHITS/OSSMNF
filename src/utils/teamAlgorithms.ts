@@ -267,12 +267,15 @@ export function generateILPOptimizedTeams(
     }
 
     // Extract teams from solution
+    // Use threshold comparison to handle floating point values from solver
     const redTeam: TeamPlayer[] = [];
     const whiteTeam: TeamPlayer[] = [];
 
     selectedPlayers.forEach((player, i) => {
       const varName = `x${i}`;
-      if (results[varName] === 1) {
+      const value = results[varName];
+      // Use threshold > 0.5 to handle floating point imprecision
+      if (typeof value === 'number' && value > 0.5) {
         redTeam.push({ ...player, isCaptain: false });
       } else {
         whiteTeam.push({ ...player, isCaptain: false });
@@ -312,7 +315,13 @@ function buildILPModel(
   teamSize: number,
   minPositions: { DEF: number; ATT: number; ALR: number },
   weights: Required<AlgorithmConfig>['weights']
-) {
+): {
+  optimize: string;
+  opType: 'min' | 'max';
+  constraints: Record<string, { min?: number; max?: number; equal?: number }>;
+  variables: Record<string, Record<string, number>>;
+  ints: Record<string, number>;
+} {
   // Calculate totals for centering
   const totals = {
     ovr: players.reduce((s, p) => s + p.ovr, 0),
@@ -390,15 +399,21 @@ function buildILPModel(
     };
   });
 
-  // Elite player balance: try to split top 4 players evenly (2 each)
-  const sortedByOvr = [...players].sort((a, b) => b.ovr - a.ovr);
-  const eliteIndices = sortedByOvr.slice(0, 4).map((p) => players.indexOf(p));
+  // Elite player balance: try to split top players evenly
+  // Scale elite count based on team size (for 8v8 use top 4, for smaller teams use fewer)
+  const eliteCount = Math.min(4, Math.floor(teamSize / 2) * 2); // 2 for 5-6, 4 for 7+
+  const elitePerTeam = eliteCount / 2;
 
-  if (eliteIndices.length >= 4) {
-    model.constraints['eliteBalance'] = { min: 2, max: 2 };
-    eliteIndices.forEach((i) => {
-      model.variables[`x${i}`].eliteBalance = 1;
-    });
+  if (eliteCount >= 2 && teamSize >= 5) {
+    const sortedByOvr = [...players].sort((a, b) => b.ovr - a.ovr);
+    const eliteIndices = sortedByOvr.slice(0, eliteCount).map((p) => players.indexOf(p));
+
+    if (eliteIndices.length >= eliteCount) {
+      model.constraints['eliteBalance'] = { min: elitePerTeam, max: elitePerTeam };
+      eliteIndices.forEach((i) => {
+        model.variables[`x${i}`].eliteBalance = 1;
+      });
+    }
   }
 
   return model;
