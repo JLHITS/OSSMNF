@@ -526,6 +526,11 @@ h1, h2, h3 {
   margin: 20px 0;
 }
 
+.pitch-with-swap-btn {
+  position: relative;
+  display: inline-block;
+}
+
 .teams-controls-row {
   display: flex;
   gap: 32px;
@@ -765,7 +770,7 @@ h1, h2, h3 {
 /* Swap Teams Button */
 .swap-teams-btn {
   position: absolute;
-  right: -50px;
+  right: -55px;
   top: 50%;
   transform: translateY(-50%);
   background: var(--bg-white);

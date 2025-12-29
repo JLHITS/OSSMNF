@@ -34,7 +34,7 @@ function PlayerCard({ player, team, showRatings, isSelected, onSelect }: PlayerC
       onClick={() => onSelect(player, team)}
       className={`player-card ${team}-team ${isSelected ? 'swap-selected' : ''}`}
     >
-      <div className={`player-photo-container ${player.isCaptain ? 'has-captain' : ''}`}>
+      <div className="player-photo-container">
         <img
           src={player.photoUrl ? getCloudinaryImageUrl(player.photoUrl) : placeholder}
           alt={player.name}
@@ -44,18 +44,13 @@ function PlayerCard({ player, team, showRatings, isSelected, onSelect }: PlayerC
             (e.target as HTMLImageElement).src = placeholder;
           }}
         />
-        {player.isCaptain && (
-          <span className="captain-badge" title="Captain">
-            C
-          </span>
-        )}
         {isSelected && (
           <span className="swap-indicator" title="Selected to swap">
             ↺
           </span>
         )}
       </div>
-      <span className="player-name">{player.name}</span>
+      <span className="player-name">{player.name}{player.isCaptain && ' (C)'}</span>
       {showRatings && <span className="player-ovr">{player.ovr}</span>}
     </div>
   );
@@ -208,25 +203,27 @@ export function FootballPitch({
 
   return (
     <div className="pitch-container-wrapper">
-      <div className="football-pitch">
-        <div className="pitch-markings">
-          <div className="center-line" />
-          <div className="center-circle" />
-          <div className="penalty-area top" />
-          <div className="penalty-area bottom" />
-          <div className="goal-area top" />
-          <div className="goal-area bottom" />
+      <div className="pitch-with-swap-btn">
+        <div className="football-pitch">
+          <div className="pitch-markings">
+            <div className="center-line" />
+            <div className="center-circle" />
+            <div className="penalty-area top" />
+            <div className="penalty-area bottom" />
+            <div className="goal-area top" />
+            <div className="goal-area bottom" />
+          </div>
+
+          <div className="team-half white-half">
+            {renderTeamFormation(whiteTeam, 'white')}
+          </div>
+
+          <div className="team-half red-half">
+            {renderTeamFormation(redTeam, 'red', true)}
+          </div>
         </div>
 
-        <div className="team-half white-half">
-          {renderTeamFormation(whiteTeam, 'white')}
-        </div>
-
-        <div className="team-half red-half">
-          {renderTeamFormation(redTeam, 'red', true)}
-        </div>
-
-        {/* Swap Teams Button */}
+        {/* Swap Teams Button - outside football-pitch to avoid overflow:hidden */}
         {onSwapTeams && (
           <button
             className="swap-teams-btn"
