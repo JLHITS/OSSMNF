@@ -267,26 +267,25 @@ export function generateILPOptimizedTeams(
     }
 
     // Extract teams from solution
-    // Use threshold comparison to handle floating point values from solver
-    const redTeam: TeamPlayer[] = [];
-    const whiteTeam: TeamPlayer[] = [];
-
-    selectedPlayers.forEach((player, i) => {
-      const varName = `x${i}`;
-      const value = results[varName];
-      // Use threshold > 0.5 to handle floating point imprecision
-      if (typeof value === 'number' && value > 0.5) {
-        redTeam.push({ ...player, isCaptain: false });
-      } else {
-        whiteTeam.push({ ...player, isCaptain: false });
-      }
+    // Sort players by their assignment value and take top teamSize for Red
+    // This guarantees equal team sizes regardless of solver precision
+    const playerScores: Array<{ player: Player; score: number }> = selectedPlayers.map((player, i) => {
+      const rawScore = results[`x${i}`];
+      return {
+        player,
+        score: typeof rawScore === 'number' ? rawScore : 0,
+      };
     });
 
-    // Verify team sizes (in case solver didn't respect constraints perfectly)
-    if (redTeam.length !== teamSize || whiteTeam.length !== teamSize) {
-      console.warn('ILP solver produced unequal teams, falling back to constraint optimizer');
-      return generateConstraintOptimizedTeams(players, teamSize, config);
-    }
+    // Sort by score descending - players with higher scores go to Red
+    playerScores.sort((a, b) => b.score - a.score);
+
+    const redTeam: TeamPlayer[] = playerScores
+      .slice(0, teamSize)
+      .map(({ player }) => ({ ...player, isCaptain: false }));
+    const whiteTeam: TeamPlayer[] = playerScores
+      .slice(teamSize)
+      .map(({ player }) => ({ ...player, isCaptain: false }));
 
     assignRandomCaptains(redTeam, whiteTeam);
 
