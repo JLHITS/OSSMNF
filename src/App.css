@@ -528,7 +528,9 @@ h1, h2, h3 {
 
 .pitch-with-swap-btn {
   position: relative;
-  display: inline-block;
+  display: flex;
+  justify-content: center;
+  width: 100%;
 }
 
 .teams-controls-row {
@@ -1972,6 +1974,11 @@ h1, h2, h3 {
     flex: 1 1 auto;
     width: 100%;
     min-width: 0;
+  }
+
+  .pitch-with-swap-btn {
+    overflow: visible;
+    padding-right: 45px;
   }
 
   .football-pitch {
