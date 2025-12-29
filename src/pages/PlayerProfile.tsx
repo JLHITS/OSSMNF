@@ -318,13 +318,13 @@ export function PlayerProfile() {
             <span className="extra-stat-value">{goalsPerGame}</span>
           </div>
           <div className="extra-stat">
-            <span className="extra-stat-label">Red Team Record</span>
+            <span className="extra-stat-label">Reds Record</span>
             <span className="extra-stat-value">
               {teamColorRecord.redWins}W-{teamColorRecord.redLosses}L-{teamColorRecord.redDraws}D
             </span>
           </div>
           <div className="extra-stat">
-            <span className="extra-stat-label">White Team Record</span>
+            <span className="extra-stat-label">Non-Reds Record</span>
             <span className="extra-stat-value">
               {teamColorRecord.whiteWins}W-{teamColorRecord.whiteLosses}L-{teamColorRecord.whiteDraws}D
             </span>
@@ -403,7 +403,7 @@ export function PlayerProfile() {
                     <div className="match-history-details">
                       <div className="match-teams-row">
                         <div className="match-team-list">
-                          <div className="team-label-small red">Red Team</div>
+                          <div className="team-label-small red">Reds</div>
                           {match.redTeam.map((p) => (
                             <Link
                               key={p.id}
@@ -415,7 +415,7 @@ export function PlayerProfile() {
                           ))}
                         </div>
                         <div className="match-team-list">
-                          <div className="team-label-small white">White Team</div>
+                          <div className="team-label-small white">Non-Reds</div>
                           {match.whiteTeam.map((p) => (
                             <Link
                               key={p.id}

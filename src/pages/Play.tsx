@@ -334,6 +334,12 @@ export function Play() {
     setWhiteTeam(newWhiteTeam);
   };
 
+  const handleSwapTeams = () => {
+    // Swap the teams - red becomes white and vice versa
+    setRedTeam(whiteTeam);
+    setWhiteTeam(redTeam);
+  };
+
   const handleRedCaptainChange = (playerId: string) => {
     setRedTeam((prev) =>
       prev.map((p) => ({
@@ -447,10 +453,10 @@ export function Play() {
     return `⚽ Monday Night Football - ${matchSize}
 📅 ${today}
 
-🔴 RED TEAM
+🔴 REDS
 ${redList}
 
-⚪ WHITE TEAM
+⚪ NON-REDS
 ${whiteList}`;
   };
 
@@ -858,6 +864,7 @@ ${whiteList}`;
               redTeam={redTeam}
               whiteTeam={whiteTeam}
               onTeamsChange={handleTeamsChange}
+              onSwapTeams={handleSwapTeams}
               showRatings={showRatings}
             />
           </div>

@@ -131,7 +131,7 @@ export function Results() {
     let result = `⚽ MNF Results - ${matchDate}\n\n`;
 
     if (match.status === 'completed' && match.redScore !== null && match.whiteScore !== null) {
-      result += `🔴 Red ${match.redScore} - ${match.whiteScore} White ⚪\n`;
+      result += `🔴 Reds ${match.redScore} - ${match.whiteScore} Non-Reds ⚪\n`;
 
       // Add scorers if any
       const redGoals = match.redScorers.length;
@@ -171,7 +171,7 @@ export function Results() {
         }
       }
     } else {
-      result += `🔴 Red - vs - White ⚪\n📋 Result pending`;
+      result += `🔴 Reds - vs - Non-Reds ⚪\n📋 Result pending`;
     }
 
     return result;
@@ -207,7 +207,7 @@ export function Results() {
                   <span className="score">
                     {match.redScore ?? '-'} - {match.whiteScore ?? '-'}
                   </span>
-                  <span className="team-label white">WHITE</span>
+                  <span className="team-label white">NON-REDS</span>
                 </div>
                 <span className="result-size">{match.matchSize}</span>
                 <span className={`result-status ${match.status}`}>
@@ -239,7 +239,7 @@ export function Results() {
                           />
                         </div>
                         <div className="score-input-group">
-                          <label>White Score:</label>
+                          <label>Non-Reds Score:</label>
                           <input
                             type="number"
                             min="0"
@@ -251,7 +251,7 @@ export function Results() {
 
                       <div className="scorers-section">
                         <div className="team-scorers">
-                          <h4>Red Team Scorers (optional)</h4>
+                          <h4>Reds Scorers (optional)</h4>
                           <div className="scorer-buttons">
                             {match.redTeam.map((player) => {
                               const goals = countGoals(player.id, editRedScorers);
@@ -291,7 +291,7 @@ export function Results() {
                         </div>
 
                         <div className="team-scorers">
-                          <h4>White Team Scorers (optional)</h4>
+                          <h4>Non-Reds Scorers (optional)</h4>
                           <div className="scorer-buttons">
                             {match.whiteTeam.map((player) => {
                               const goals = countGoals(player.id, editWhiteScorers);
@@ -344,7 +344,7 @@ export function Results() {
                     <>
                       <div className="teams-overview">
                         <div className="team-list red-team-list">
-                          <h4>Red Team (OVR: {match.redTeamOvr})</h4>
+                          <h4>Reds (OVR: {match.redTeamOvr})</h4>
                           <ul>
                             {match.redTeam.map((player) => (
                               <li key={player.id}>
@@ -369,7 +369,7 @@ export function Results() {
                         </div>
 
                         <div className="team-list white-team-list">
-                          <h4>White Team (OVR: {match.whiteTeamOvr})</h4>
+                          <h4>Non-Reds (OVR: {match.whiteTeamOvr})</h4>
                           <ul>
                             {match.whiteTeam.map((player) => (
                               <li key={player.id}>

@@ -762,6 +762,51 @@ h1, h2, h3 {
   padding-bottom: 44px;
 }
 
+/* Swap Teams Button */
+.swap-teams-btn {
+  position: absolute;
+  right: -50px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--bg-white);
+  border: 2px solid var(--border-light);
+  border-radius: 10px;
+  padding: 12px 10px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 8px var(--shadow-medium);
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.swap-teams-btn:hover {
+  border-color: var(--primary-green);
+  background: var(--bg-light);
+  transform: translateY(-50%) scale(1.05);
+}
+
+.swap-teams-btn:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.swap-arrow {
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--primary-green);
+  font-weight: bold;
+}
+
+.swap-arrow.up {
+  color: var(--white-team-border);
+}
+
+.swap-arrow.down {
+  color: var(--red-team);
+}
+
 /* Team Formation Layout */
 .team-formation {
   display: flex;
@@ -865,9 +910,8 @@ h1, h2, h3 {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  text-align: center;
+  line-height: 20px;
   font-size: 0.7rem;
   font-weight: 700;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -1941,6 +1985,15 @@ h1, h2, h3 {
 
   .red-half {
     padding-bottom: 28px;
+  }
+
+  .swap-teams-btn {
+    right: -40px;
+    padding: 8px 6px;
+  }
+
+  .swap-arrow {
+    font-size: 1rem;
   }
 
   .team-formation {

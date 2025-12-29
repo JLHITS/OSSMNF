@@ -7,6 +7,7 @@ interface FootballPitchProps {
   redTeam: TeamPlayer[];
   whiteTeam: TeamPlayer[];
   onTeamsChange: (redTeam: TeamPlayer[], whiteTeam: TeamPlayer[]) => void;
+  onSwapTeams?: () => void;
   showRatings: boolean;
 }
 
@@ -64,6 +65,7 @@ export function FootballPitch({
   redTeam,
   whiteTeam,
   onTeamsChange,
+  onSwapTeams,
   showRatings,
 }: FootballPitchProps) {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
@@ -223,6 +225,19 @@ export function FootballPitch({
         <div className="team-half red-half">
           {renderTeamFormation(redTeam, 'red', true)}
         </div>
+
+        {/* Swap Teams Button */}
+        {onSwapTeams && (
+          <button
+            className="swap-teams-btn"
+            onClick={onSwapTeams}
+            title="Swap teams"
+            type="button"
+          >
+            <span className="swap-arrow up">↑</span>
+            <span className="swap-arrow down">↓</span>
+          </button>
+        )}
       </div>
 
       {showRatings && (
