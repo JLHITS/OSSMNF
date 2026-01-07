@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
 import { Login } from './components/Login';
@@ -10,14 +10,14 @@ import { Configuration } from './pages/Configuration';
 import { PlayerProfile } from './pages/PlayerProfile';
 import './App.css';
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedOutlet() {
   const { isAuthenticated } = useAuth();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  return <>{children}</>;
+  return <Outlet />;
 }
 
 function AppRoutes() {
@@ -40,18 +40,18 @@ function AppRoutes() {
       <Route
         path="/"
         element={
-          <ProtectedRoute>
-            <DataProvider>
-              <Layout />
-            </DataProvider>
-          </ProtectedRoute>
+          <DataProvider>
+            <Layout />
+          </DataProvider>
         }
       >
         <Route index element={<Navigate to="/play" replace />} />
-        <Route path="play" element={<Play />} />
-        <Route path="results" element={<Results />} />
         <Route path="stats" element={<Stats />} />
-        <Route path="config" element={<Configuration />} />
+        <Route element={<ProtectedOutlet />}>
+          <Route path="play" element={<Play />} />
+          <Route path="results" element={<Results />} />
+          <Route path="config" element={<Configuration />} />
+        </Route>
       </Route>
       <Route path="*" element={<Navigate to="/play" replace />} />
     </Routes>

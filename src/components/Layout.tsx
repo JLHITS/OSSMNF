@@ -4,7 +4,7 @@ import logo from '../assets/logo.png';
 import { APP_VERSION } from '../version';
 
 export function Layout() {
-  const { logout } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
 
   return (
     <div className="app-layout">
@@ -24,9 +24,15 @@ export function Layout() {
             Configuration
           </NavLink>
         </nav>
-        <button onClick={logout} className="logout-button" data-emoji="👋">
-          Logout
-        </button>
+        {isAuthenticated ? (
+          <button onClick={logout} className="logout-button" data-emoji="👋">
+            Logout
+          </button>
+        ) : (
+          <NavLink to="/login" className="logout-button">
+            Admin Login
+          </NavLink>
+        )}
       </header>
       <main className="app-main">
         <Outlet />
