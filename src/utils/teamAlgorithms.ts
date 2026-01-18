@@ -1,4 +1,3 @@
-import solver from 'javascript-lp-solver';
 import type {
   Player,
   TeamPlayer,
@@ -226,203 +225,33 @@ export function generateConstraintOptimizedTeams(
 }
 
 /**
- * ILP Solver Optimizer
+ * Total Football Optimizer
  *
- * Uses Integer Linear Programming to find the optimal team split
- * Minimizes weighted attribute differences while respecting constraints
+ * Uses enhanced constraint optimization with more iterations
+ * for the most balanced teams possible
  */
 export function generateILPOptimizedTeams(
   players: Player[],
   teamSize: number,
   config: AlgorithmConfig = {}
 ): TeamGenerationResult {
-  const startTime = performance.now();
-  const mergedConfig = { ...DEFAULT_CONFIG, ...config };
-
-  // Take top players by OVR
-  const sortedPlayers = [...players].sort((a, b) => b.ovr - a.ovr);
-  const selectedPlayers = sortedPlayers.slice(0, teamSize * 2);
-
-  // Check if we have enough players for each position
-  const posCounts: Record<Position, number> = { DEF: 0, ATT: 0, ALR: 0 };
-  selectedPlayers.forEach((p) => posCounts[p.position]++);
-
-  // Adjust minPositions if we don't have enough of a position
-  const adjustedMinPos = { ...mergedConfig.minPositions };
-  for (const pos of ['DEF', 'ATT', 'ALR'] as const) {
-    // Each team needs minPositions[pos], so total needed is minPositions[pos] * 2
-    const totalNeeded = adjustedMinPos[pos] * 2;
-    if (posCounts[pos] < totalNeeded) {
-      adjustedMinPos[pos] = Math.floor(posCounts[pos] / 2);
-    }
-  }
-
-  try {
-    const model = buildILPModel(selectedPlayers, teamSize, adjustedMinPos, mergedConfig.weights);
-    const results = solver.Solve(model);
-
-    if (!results.feasible) {
-      console.warn('ILP solver found no feasible solution, falling back to constraint optimizer');
-      return generateConstraintOptimizedTeams(players, teamSize, config);
-    }
-
-    // Extract teams from solution
-    const playerScores: Array<{ player: Player; score: number }> = selectedPlayers.map((player, i) => {
-      const rawScore = results[`x${i}`];
-      return {
-        player,
-        score: typeof rawScore === 'number' ? rawScore : 0,
-      };
-    });
-
-    // Check if solver returned meaningful values (should have mix of ~1 and ~0)
-    const hasHighScores = playerScores.filter(p => p.score > 0.5).length;
-    const hasLowScores = playerScores.filter(p => p.score < 0.5).length;
-
-    // If solver didn't return a proper split, fall back
-    if (hasHighScores === 0 || hasLowScores === 0 ||
-        Math.abs(hasHighScores - teamSize) > 2) {
-      console.warn('ILP solver returned invalid assignment, falling back to constraint optimizer');
-      return generateConstraintOptimizedTeams(players, teamSize, config);
-    }
-
-    // Sort by score descending - players with higher scores go to Red
-    playerScores.sort((a, b) => b.score - a.score);
-
-    const redTeam: TeamPlayer[] = playerScores
-      .slice(0, teamSize)
-      .map(({ player }) => ({ ...player, isCaptain: false }));
-    const whiteTeam: TeamPlayer[] = playerScores
-      .slice(teamSize)
-      .map(({ player }) => ({ ...player, isCaptain: false }));
-
-    assignRandomCaptains(redTeam, whiteTeam);
-
-    const { score } = calculateFairnessScore(redTeam, whiteTeam, mergedConfig);
-
-    return {
-      redTeam,
-      whiteTeam,
-      metadata: {
-        algorithm: 'ilp-solver',
-        fairnessScore: score,
-        timeMs: Math.round(performance.now() - startTime),
-      },
-    };
-  } catch (error) {
-    console.error('ILP solver error:', error);
-    return generateConstraintOptimizedTeams(players, teamSize, config);
-  }
-}
-
-/**
- * Build the ILP model for team optimization
- */
-function buildILPModel(
-  players: Player[],
-  teamSize: number,
-  minPositions: { DEF: number; ATT: number; ALR: number },
-  weights: Required<AlgorithmConfig>['weights']
-): {
-  optimize: string;
-  opType: 'min' | 'max';
-  constraints: Record<string, { min?: number; max?: number; equal?: number }>;
-  variables: Record<string, Record<string, number>>;
-  ints: Record<string, number>;
-} {
-  // Calculate totals for centering
-  const totals = {
-    ovr: players.reduce((s, p) => s + p.ovr, 0),
-    fitness: players.reduce((s, p) => s + p.fitness, 0),
-    attack: players.reduce((s, p) => s + p.attack, 0),
-    defence: players.reduce((s, p) => s + p.defence, 0),
-    ballUse: players.reduce((s, p) => s + p.ballUse, 0),
+  // Use constraint optimizer with higher iterations for better results
+  const enhancedConfig: AlgorithmConfig = {
+    ...config,
+    maxIterations: 1000, // Double the iterations for better optimization
+    temperature: 15, // Higher starting temperature for more exploration
+    coolingRate: 0.99, // Slower cooling for finer optimization
   };
 
-  // The model structure for javascript-lp-solver
-  const model: {
-    optimize: string;
-    opType: 'min' | 'max';
-    constraints: Record<string, { min?: number; max?: number; equal?: number }>;
-    variables: Record<string, Record<string, number>>;
-    ints: Record<string, number>;
-  } = {
-    optimize: 'cost',
-    opType: 'min' as const,
-    constraints: {
-      // Team size: exactly teamSize players on Red
-      teamSize: { equal: teamSize },
-      // Position constraints for Red team
-      redDEF: { min: minPositions.DEF },
-      redATT: { min: minPositions.ATT },
-      redALR: { min: minPositions.ALR },
+  const result = generateConstraintOptimizedTeams(players, teamSize, enhancedConfig);
+
+  // Update metadata to reflect this algorithm
+  return {
+    ...result,
+    metadata: {
+      ...result.metadata,
+      algorithm: 'ilp-solver', // Keep the name for UI consistency
     },
-    variables: {},
-    ints: {},
   };
-
-  // Add player variables
-  players.forEach((player, i) => {
-    const varName = `x${i}`;
-    model.variables[varName] = {
-      teamSize: 1,
-      // Position tracking
-      redDEF: player.position === 'DEF' ? 1 : 0,
-      redATT: player.position === 'ATT' ? 1 : 0,
-      redALR: player.position === 'ALR' ? 1 : 0,
-    };
-    model.ints[varName] = 1; // Binary variable
-  });
-
-  // For each attribute, we want to minimize |Red_sum - White_sum|
-  // Since White_sum = Total - Red_sum, we want to minimize |2*Red_sum - Total|
-  // We use slack variables to linearize the absolute value
-  const attributes = ['ovr', 'fitness', 'attack', 'defence', 'ballUse'] as const;
-
-  attributes.forEach((attr) => {
-    const halfTotal = totals[attr] / 2;
-    const constraintName = `${attr}Balance`;
-
-    // Constraint: Red_sum - slack_plus + slack_minus = halfTotal
-    // We want Red_sum close to halfTotal
-    model.constraints[constraintName] = { equal: halfTotal };
-
-    // Add attribute contribution to each player variable
-    players.forEach((player, i) => {
-      const varName = `x${i}`;
-      model.variables[varName][constraintName] = player[attr];
-    });
-
-    // Slack variables for absolute value linearization
-    const plusVar = `slack_${attr}_plus`;
-    const minusVar = `slack_${attr}_minus`;
-
-    model.variables[plusVar] = {
-      [constraintName]: 1,
-      cost: weights[attr],
-    };
-    model.variables[minusVar] = {
-      [constraintName]: -1,
-      cost: weights[attr],
-    };
-  });
-
-  // Elite player balance: try to split top players evenly
-  // Scale elite count based on team size (for 8v8 use top 4, for smaller teams use fewer)
-  const eliteCount = Math.min(4, Math.floor(teamSize / 2) * 2); // 2 for 5-6, 4 for 7+
-  const elitePerTeam = eliteCount / 2;
-
-  if (eliteCount >= 2 && teamSize >= 5) {
-    const sortedByOvr = [...players].sort((a, b) => b.ovr - a.ovr);
-    const eliteIndices = sortedByOvr.slice(0, eliteCount).map((p) => players.indexOf(p));
-
-    if (eliteIndices.length >= eliteCount) {
-      model.constraints['eliteBalance'] = { min: elitePerTeam, max: elitePerTeam };
-      eliteIndices.forEach((i) => {
-        model.variables[`x${i}`].eliteBalance = 1;
-      });
-    }
-  }
-
-  return model;
 }
+
