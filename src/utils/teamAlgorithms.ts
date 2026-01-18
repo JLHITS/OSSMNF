@@ -267,8 +267,6 @@ export function generateILPOptimizedTeams(
     }
 
     // Extract teams from solution
-    // Sort players by their assignment value and take top teamSize for Red
-    // This guarantees equal team sizes regardless of solver precision
     const playerScores: Array<{ player: Player; score: number }> = selectedPlayers.map((player, i) => {
       const rawScore = results[`x${i}`];
       return {
@@ -276,6 +274,17 @@ export function generateILPOptimizedTeams(
         score: typeof rawScore === 'number' ? rawScore : 0,
       };
     });
+
+    // Check if solver returned meaningful values (should have mix of ~1 and ~0)
+    const hasHighScores = playerScores.filter(p => p.score > 0.5).length;
+    const hasLowScores = playerScores.filter(p => p.score < 0.5).length;
+
+    // If solver didn't return a proper split, fall back
+    if (hasHighScores === 0 || hasLowScores === 0 ||
+        Math.abs(hasHighScores - teamSize) > 2) {
+      console.warn('ILP solver returned invalid assignment, falling back to constraint optimizer');
+      return generateConstraintOptimizedTeams(players, teamSize, config);
+    }
 
     // Sort by score descending - players with higher scores go to Red
     playerScores.sort((a, b) => b.score - a.score);
