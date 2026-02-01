@@ -40,6 +40,7 @@ export async function getPlayers(): Promise<Player[]> {
       ballUse: data.ballUse,
       position: data.position,
       ovr: data.ovr,
+      archived: data.archived || false,
       createdAt: data.createdAt?.toDate() || new Date(),
       updatedAt: data.updatedAt?.toDate() || new Date(),
     } as Player;
@@ -61,6 +62,7 @@ export async function getPlayer(id: string): Promise<Player | null> {
     ballUse: data.ballUse,
     position: data.position,
     ovr: data.ovr,
+    archived: data.archived || false,
     createdAt: data.createdAt?.toDate() || new Date(),
     updatedAt: data.updatedAt?.toDate() || new Date(),
   } as Player;
