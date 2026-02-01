@@ -7,7 +7,7 @@ import { LoadingOverlay } from '../components/LoadingOverlay';
 import type { TeamPlayer, MatchSize, Player, AvailabilityStatus, TeamGenerationAlgorithm } from '../types';
 import { generateBalancedTeams, getTeamSize, calculateTeamOVR } from '../utils/calculations';
 import { generateConstraintOptimizedTeams, generateILPOptimizedTeams } from '../utils/teamAlgorithms';
-import { createMatch, resetAllAvailability } from '../services/firebase';
+import { createMatch, resetAllAvailability, updatePlayer } from '../services/firebase';
 import { getCloudinaryImageUrl } from '../services/cloudinary';
 import placeholder from '../assets/placeholder.png';
 
@@ -42,7 +42,7 @@ const saveTeamsToStorage = (redTeam: TeamPlayer[], whiteTeam: TeamPlayer[], matc
 };
 
 export function Play() {
-  const { players, matches, availability, refreshMatches, updateAvailability } = useData();
+  const { players, matches, availability, refreshMatches, updateAvailability, refreshPlayers } = useData();
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<Set<string>>(new Set());
 
   // Initialize from localStorage
@@ -60,6 +60,7 @@ export function Play() {
   // Reserve management state
   const [selectedReserveId, setSelectedReserveId] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [archivedExpanded, setArchivedExpanded] = useState(false);
 
   // Algorithm selection state
   const [selectedAlgorithm, setSelectedAlgorithm] = useState<TeamGenerationAlgorithm>(() => {
@@ -82,12 +83,16 @@ export function Play() {
   const teamSize = getTeamSize(matchSize);
   const requiredPlayers = teamSize * 2;
 
+  // Filter out archived players
+  const activePlayers = useMemo(() => players.filter(p => !p.archived), [players]);
+  const archivedPlayers = useMemo(() => players.filter(p => p.archived), [players]);
+
   // Compute playing squad and reserves from availability data
   const { playingSquad, reserves } = useMemo(() => {
     const playing: Player[] = [];
     const reserve: Array<{ player: Player; order: number }> = [];
 
-    players.forEach((player) => {
+    activePlayers.forEach((player) => {
       const avail = availability.get(player.id);
       if (avail && avail.reserveOrder !== null) {
         reserve.push({ player, order: avail.reserveOrder });
@@ -103,7 +108,7 @@ export function Play() {
       playingSquad: playing,
       reserves: reserve.map((r) => r.player),
     };
-  }, [players, availability]);
+  }, [activePlayers, availability]);
 
   // Get player availability status
   const getPlayerStatus = (playerId: string): AvailabilityStatus => {
@@ -118,7 +123,7 @@ export function Play() {
 
     const reserveIds = new Set(reserves.map((p) => p.id));
 
-    players.forEach((player) => {
+    activePlayers.forEach((player) => {
       const status = availability.get(player.id)?.status || 'unconfirmed';
       if (status === 'in') inPlayers.push(player);
       else if (status === 'out') outPlayers.push(player);
@@ -126,7 +131,7 @@ export function Play() {
     });
 
     return { inPlayers, outPlayers, waitingPlayers };
-  }, [players, availability, reserves]);
+  }, [activePlayers, availability, reserves]);
 
   // Set player availability via dropdown (instead of cycling button)
   const handleStatusChange = async (playerId: string, newStatus: AvailabilityStatus) => {
@@ -211,7 +216,7 @@ export function Play() {
 
   // Select all players marked IN
   const selectAllIn = () => {
-    const inPlayers = players.filter((p) => getPlayerStatus(p.id) === 'in');
+    const inPlayers = activePlayers.filter((p) => getPlayerStatus(p.id) === 'in');
     const playerIds = new Set(inPlayers.slice(0, requiredPlayers).map((p) => p.id));
     setSelectedPlayerIds(playerIds);
   };
@@ -219,7 +224,7 @@ export function Play() {
   // Initialize availability for all players if not set
   useEffect(() => {
     const initializeAvailability = async () => {
-      const playersWithoutAvailability = players.filter((p) => !availability.has(p.id));
+      const playersWithoutAvailability = activePlayers.filter((p) => !availability.has(p.id));
 
       if (playersWithoutAvailability.length > 0) {
         // First 16 players go to playing squad, rest to reserves
@@ -227,7 +232,7 @@ export function Play() {
           const existingReserveCount = Array.from(availability.values())
             .filter((a) => a.reserveOrder !== null).length;
 
-          if (index < PLAYING_SQUAD_SIZE - (players.length - playersWithoutAvailability.length)) {
+          if (index < PLAYING_SQUAD_SIZE - (activePlayers.length - playersWithoutAvailability.length)) {
             return { playerId: player.id, status: 'unconfirmed' as AvailabilityStatus, reserveOrder: null };
           } else {
             const reserveIndex = index - PLAYING_SQUAD_SIZE + existingReserveCount + 1;
@@ -241,10 +246,10 @@ export function Play() {
       }
     };
 
-    if (players.length > 0) {
+    if (activePlayers.length > 0) {
       initializeAvailability();
     }
-  }, [players, availability, updateAvailability]);
+  }, [activePlayers, availability, updateAvailability]);
 
   // Reset all availability
   const handleResetAvailability = async () => {
@@ -256,6 +261,33 @@ export function Play() {
       setAlertMessage({ message: 'Failed to reset availability', type: 'error' });
     }
     setConfirmReset(false);
+  };
+
+  // Unarchive a player and add them to reserves
+  const handleUnarchivePlayer = async (player: Player) => {
+    try {
+      // Unarchive the player
+      await updatePlayer(player.id, { archived: false });
+
+      // Find next available reserve order
+      const maxOrder = Math.max(0, ...Array.from(availability.values())
+        .filter((a) => a.reserveOrder !== null)
+        .map((a) => a.reserveOrder!));
+      const newReserveOrder = maxOrder + 1;
+
+      // Add to reserves with unconfirmed status
+      await updateAvailability([{
+        playerId: player.id,
+        status: 'unconfirmed',
+        reserveOrder: newReserveOrder
+      }]);
+
+      await refreshPlayers();
+      setAlertMessage({ message: `${player.name} has been unarchived and added to reserves`, type: 'success' });
+    } catch (err) {
+      console.error('Error unarchiving player:', err);
+      setAlertMessage({ message: 'Failed to unarchive player', type: 'error' });
+    }
   };
 
   const togglePlayer = (playerId: string) => {
@@ -284,7 +316,7 @@ export function Play() {
 
   const handleGenerateTeams = async () => {
     setError(null);
-    const selectedPlayers = players.filter((p) => selectedPlayerIds.has(p.id));
+    const selectedPlayers = activePlayers.filter((p) => selectedPlayerIds.has(p.id));
 
     if (selectedPlayers.length !== requiredPlayers) {
       setError(`Need exactly ${requiredPlayers} players for ${matchSize}. Selected: ${selectedPlayers.length}`);
@@ -681,9 +713,54 @@ ${whiteList}`;
             </div>
           )}
 
-          {players.length === 0 && (
+          {/* Archived Players Section */}
+          {archivedPlayers.length > 0 && (
+            <div className="squad-section archived-section">
+              <button
+                className="archived-toggle-btn"
+                onClick={() => setArchivedExpanded(!archivedExpanded)}
+              >
+                <span className="archived-toggle-icon">{archivedExpanded ? '▼' : '▶'}</span>
+                <h3 className="squad-section-title">
+                  Archived Players ({archivedPlayers.length})
+                </h3>
+              </button>
+              {archivedExpanded && (
+                <>
+                  <p className="archived-hint">Archived players can be unarchived and moved back to reserves.</p>
+                  <div className="archived-grid">
+                    {archivedPlayers.map((player) => (
+                      <div key={player.id} className="archived-card">
+                        <img
+                          src={player.photoUrl ? getCloudinaryImageUrl(player.photoUrl) : placeholder}
+                          alt={player.name}
+                          className="archived-photo"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = placeholder;
+                          }}
+                        />
+                        <div className="archived-info">
+                          <span className="archived-name">{player.name}</span>
+                          <span className="archived-details">{player.position} • OVR {player.ovr}</span>
+                        </div>
+                        <button
+                          className="btn btn-small btn-unarchive"
+                          onClick={() => handleUnarchivePlayer(player)}
+                          data-emoji="📤"
+                        >
+                          Unarchive
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {activePlayers.length === 0 && (
             <p className="no-players-message">
-              No players found. Add players in the Configuration tab first.
+              No active players found. Add players in the Configuration tab first.
             </p>
           )}
 

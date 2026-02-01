@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { calculatePlayerStats } from '../services/firebase';
 import { calculatePlayerForm } from '../utils/calculations';
-import { calculatePlayerAchievements } from '../utils/achievements';
+import { calculatePlayerAchievements, type DynamicBadgeContext } from '../utils/achievements';
 import { getCloudinaryImageUrl } from '../services/cloudinary';
 import { createPlayerSlug } from './PlayerProfile';
 import type { PlayerStats, Achievement } from '../types';
@@ -19,7 +19,8 @@ export function Stats() {
   const playerStats: ExtendedPlayerStats[] = useMemo(() => {
     const statsMap = calculatePlayerStats(players, matches);
 
-    return players
+    // First pass: calculate base stats without achievements
+    const baseStats = players
       .map((player) => {
         const stats = statsMap.get(player.id) || { wins: 0, losses: 0, draws: 0, goals: 0 };
         const totalMatches = stats.wins + stats.losses + stats.draws;
@@ -29,9 +30,6 @@ export function Stats() {
 
         // Calculate form and streak
         const { form, streak, captainCount } = calculatePlayerForm(player.id, matches);
-
-        // Calculate achievements
-        const achievements = calculatePlayerAchievements(player.id, stats, matches, captainCount);
 
         return {
           playerId: player.id,
@@ -46,23 +44,50 @@ export function Stats() {
           form,
           currentStreak: streak,
           captainCount,
-          achievements,
+          stats, // Keep for achievement calculation
         };
       })
       .filter((stat) => stat.totalMatches > 0)
       .sort((a, b) => {
-        // Sort by: 1) Win %, 2) Wins, 3) Games played, 4) Goals
-        if (b.winPercentage !== a.winPercentage) {
-          return b.winPercentage - a.winPercentage;
-        }
+        // Sort by: 1) Wins, 2) Win %, 3) Games played, 4) Goals
         if (b.wins !== a.wins) {
           return b.wins - a.wins;
+        }
+        if (b.winPercentage !== a.winPercentage) {
+          return b.winPercentage - a.winPercentage;
         }
         if (b.totalMatches !== a.totalMatches) {
           return b.totalMatches - a.totalMatches;
         }
         return b.goals - a.goals;
       });
+
+    // Find top scorer
+    const topScorerGoals = Math.max(...baseStats.map(s => s.goals), 0);
+    const topScorerId = baseStats.find(s => s.goals === topScorerGoals && s.goals > 0)?.playerId;
+
+    // Second pass: add achievements with dynamic context
+    return baseStats.map((stat, index) => {
+      const dynamicContext: DynamicBadgeContext = {
+        leaderboardPosition: index < 3 ? (index + 1) as 1 | 2 | 3 : undefined,
+        isTopScorer: stat.playerId === topScorerId && topScorerGoals > 0,
+      };
+
+      const achievements = calculatePlayerAchievements(
+        stat.playerId,
+        stat.stats,
+        matches,
+        stat.captainCount,
+        dynamicContext
+      );
+
+      // Remove the stats property before returning
+      const { stats: _, ...statWithoutStats } = stat;
+      return {
+        ...statWithoutStats,
+        achievements,
+      };
+    });
   }, [players, matches]);
 
   const getRankBadge = (index: number) => {

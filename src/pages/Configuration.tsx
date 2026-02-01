@@ -45,6 +45,7 @@ export function Configuration() {
   const [groupByPosition, setGroupByPosition] = useState(false);
   const [alertMessage, setAlertMessage] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ playerId: string; playerName: string } | null>(null);
+  const [confirmArchive, setConfirmArchive] = useState<{ playerId: string; playerName: string } | null>(null);
 
   const calculatedOVR = calculateOVR(
     formData.fitness,
@@ -128,6 +129,26 @@ export function Configuration() {
     }
   };
 
+  const handleArchivePlayer = (player: Player) => {
+    setConfirmArchive({ playerId: player.id, playerName: player.name });
+  };
+
+  const confirmArchivePlayer = async () => {
+    if (!confirmArchive) return;
+
+    try {
+      await updatePlayer(confirmArchive.playerId, { archived: true });
+      await refreshPlayers();
+      resetForm();
+      setAlertMessage({ message: `${confirmArchive.playerName} has been archived`, type: 'success' });
+    } catch (err) {
+      console.error('Error archiving player:', err);
+      setAlertMessage({ message: 'Failed to archive player', type: 'error' });
+    } finally {
+      setConfirmArchive(null);
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -194,9 +215,12 @@ export function Configuration() {
     return labels[position];
   };
 
+  // Filter out archived players
+  const activePlayers = players.filter(p => !p.archived);
+
   // Sort and group players
   const getSortedPlayers = () => {
-    let sortedPlayers = [...players];
+    let sortedPlayers = [...activePlayers];
 
     // Sort by selected field
     sortedPlayers.sort((a, b) => {
@@ -412,6 +436,19 @@ export function Configuration() {
           <button type="submit" disabled={saving} className="btn btn-primary" data-emoji="💾">
             {saving ? 'Saving...' : editingPlayerId ? 'Update Player' : 'Add Player'}
           </button>
+          {editingPlayerId && (
+            <button
+              type="button"
+              onClick={() => {
+                const player = players.find(p => p.id === editingPlayerId);
+                if (player) handleArchivePlayer(player);
+              }}
+              className="btn btn-warning"
+              data-emoji="📦"
+            >
+              Archive Player
+            </button>
+          )}
           <button type="button" onClick={resetForm} className="btn btn-secondary" data-emoji="✖️">
             Cancel
           </button>
@@ -441,9 +478,9 @@ export function Configuration() {
       {showForm && !formAnchorPlayerId && renderForm(editingPlayerId ? 'Edit Player' : 'Add New Player')}
 
       <div className="players-list">
-        <h2>Players ({players.length})</h2>
+        <h2>Players ({activePlayers.length})</h2>
 
-        {players.length > 0 && (
+        {activePlayers.length > 0 && (
           <div className="players-sort-controls">
             <div className="sort-control-group">
               <label htmlFor="sortField">Sort by:</label>
@@ -486,8 +523,8 @@ export function Configuration() {
           </div>
         )}
 
-        {players.length === 0 ? (
-          <p className="no-players">No players added yet. Add your first player above.</p>
+        {activePlayers.length === 0 ? (
+          <p className="no-players">No active players. Add your first player above.</p>
         ) : (
           <div className="players-grid">
             {displayedPlayers.map((player) => (
@@ -561,6 +598,18 @@ export function Configuration() {
           message={`Are you sure you want to delete ${confirmDelete.playerName}? This action cannot be undone.`}
           confirmText="Delete"
           type="error"
+        />
+      )}
+
+      {confirmArchive && (
+        <Confirm
+          isOpen={true}
+          onClose={() => setConfirmArchive(null)}
+          onConfirm={confirmArchivePlayer}
+          title="Archive Player"
+          message={`Archive ${confirmArchive.playerName}? They will be moved to the archived section and won't appear in team selection. Their stats will be preserved and they can be unarchived later.`}
+          confirmText="Archive"
+          type="confirm"
         />
       )}
     </div>

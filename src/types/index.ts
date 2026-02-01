@@ -10,6 +10,7 @@ export interface Player {
   ballUse: number; // 1-10
   position: Position;
   ovr: number; // calculated
+  archived?: boolean; // Whether player is archived (inactive)
   createdAt: Date;
   updatedAt: Date;
 }
