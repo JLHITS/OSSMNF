@@ -1766,6 +1766,60 @@ h1, h2, h3 {
   gap: 8px;
 }
 
+/* Archived Players in Config */
+.archived-players-config {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 2px dashed #d1d5db;
+}
+
+.archived-players-config h2 {
+  color: #6b7280;
+}
+
+.archived-players-hint {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+
+.archived-player-card {
+  opacity: 0.7;
+  background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%) !important;
+  border: 1px dashed #d1d5db;
+  position: relative;
+}
+
+.archived-player-card:hover {
+  opacity: 1;
+}
+
+.archived-status-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #6b7280;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+
+.archived-photo {
+  filter: grayscale(50%);
+}
+
+.btn-success {
+  background: #22c55e;
+  color: white;
+  border: none;
+}
+
+.btn-success:hover {
+  background: #16a34a;
+}
+
 /* ==================== MODAL ==================== */
 .modal-overlay {
   position: fixed;

@@ -149,6 +149,17 @@ export function Configuration() {
     }
   };
 
+  const handleUnarchivePlayer = async (player: Player) => {
+    try {
+      await updatePlayer(player.id, { archived: false });
+      await refreshPlayers();
+      setAlertMessage({ message: `${player.name} has been unarchived`, type: 'success' });
+    } catch (err) {
+      console.error('Error unarchiving player:', err);
+      setAlertMessage({ message: 'Failed to unarchive player', type: 'error' });
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -215,8 +226,9 @@ export function Configuration() {
     return labels[position];
   };
 
-  // Filter out archived players
+  // Separate active and archived players
   const activePlayers = players.filter(p => !p.archived);
+  const archivedPlayers = players.filter(p => p.archived);
 
   // Sort and group players
   const getSortedPlayers = () => {
@@ -565,6 +577,14 @@ export function Configuration() {
                       Edit
                     </button>
                     <button
+                      onClick={() => handleArchivePlayer(player)}
+                      className="btn btn-small btn-warning"
+                      data-emoji="📦"
+                      title="Archive player"
+                    >
+                      Archive
+                    </button>
+                    <button
                       onClick={() => handleDeletePlayer(player)}
                       className="btn btn-small btn-danger"
                       data-emoji="🗑️"
@@ -575,6 +595,66 @@ export function Configuration() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Archived Players Section */}
+        {archivedPlayers.length > 0 && (
+          <div className="archived-players-config">
+            <h2>Archived Players ({archivedPlayers.length})</h2>
+            <p className="archived-players-hint">Archived players are inactive and won't appear in team selection.</p>
+            <div className="players-grid">
+              {archivedPlayers.map((player) => (
+                <div key={player.id} className="player-card-wrapper">
+                  <div className={`player-card-config archived-player-card`}>
+                    <div className="archived-status-badge">📦 Archived</div>
+                    <img
+                      src={player.photoUrl ? getCloudinaryImageUrl(player.photoUrl) : placeholder}
+                      alt={player.name}
+                      className="player-config-photo archived-photo"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = placeholder;
+                      }}
+                    />
+                    <div className="player-config-info">
+                      <h3>{player.name}</h3>
+                      <p className="player-position">{getPositionLabel(player.position)}</p>
+                      <div className="player-ratings">
+                        <span>WR: {player.fitness}</span>
+                        <span>DEF: {player.defence}</span>
+                        <span>ATT: {player.attack}</span>
+                        <span>BU: {player.ballUse}</span>
+                      </div>
+                      <p className="player-ovr">OVR: {player.ovr}</p>
+                    </div>
+                    <div className="player-config-actions">
+                      <button
+                        onClick={() => handleEditPlayer(player)}
+                        className="btn btn-small"
+                        data-emoji="✏️"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleUnarchivePlayer(player)}
+                        className="btn btn-small btn-success"
+                        data-emoji="📤"
+                        title="Unarchive player"
+                      >
+                        Unarchive
+                      </button>
+                      <button
+                        onClick={() => handleDeletePlayer(player)}
+                        className="btn btn-small btn-danger"
+                        data-emoji="🗑️"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
