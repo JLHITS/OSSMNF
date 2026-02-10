@@ -168,10 +168,11 @@ function calculateMonthlyStats(
  * Each metric is normalized against the best performer that month (0-1 scale).
  *
  * Weights:
- *   Win Rate:         35% - Primary measure of success
- *   Goals Per Match:  30% - Offensive contribution (can outweigh wins)
- *   Points Per Game:  20% - Overall consistency (W=3, D=1, L=0)
- *   Activity:         15% - Playing more matches gives slight edge
+ *   Win Rate:                30% - Primary measure of success
+ *   Goals Per Match:         25% - Offensive contribution (can outweigh wins)
+ *   Goals Conceded/Match:   15% - Defensive solidity (inverted - fewer = better)
+ *   Points Per Game:         15% - Overall consistency (W=3, D=1, L=0)
+ *   Activity:                15% - Playing more matches gives slight edge
  *
  * OVR Surprise Factor:
  *   Lower-rated players who perform well get a boost.
@@ -187,22 +188,27 @@ function calculatePotmScore(
   const maxGoalsPM = Math.max(...allStats.map((s) => s.goalsPerMatch), 0.01);
   const maxPPG = Math.max(...allStats.map((s) => s.pointsPerGame), 0.01);
   const maxMatches = Math.max(...allStats.map((s) => s.matchesPlayed), 1);
+  const minConcededPM = Math.min(...allStats.map((s) => s.goalsConcededPerMatch));
+  const maxConcededPM = Math.max(...allStats.map((s) => s.goalsConcededPerMatch), 0.01);
   const avgOvr = allStats.reduce((sum, s) => sum + s.playerOvr, 0) / allStats.length;
 
   const normWinRate = player.winRate / maxWinRate;
   const normGoals = player.goalsPerMatch / maxGoalsPM;
   const normPPG = player.pointsPerGame / maxPPG;
   const activity = player.matchesPlayed / maxMatches;
+  // Inverted: fewer goals conceded = higher score (1.0 = best, 0.0 = worst)
+  const concededRange = maxConcededPM - minConcededPM;
+  const normDefence = concededRange > 0
+    ? 1 - (player.goalsConcededPerMatch - minConcededPM) / concededRange
+    : 1;
 
-  // OVR surprise: lower OVR performing well is more impressive
-  // Scale: OVR 5 with avgOvr 7 → 1 + (7-5)/10*0.5 = 1.10 (10% boost)
-  // Scale: OVR 9 with avgOvr 7 → 1 + (7-9)/10*0.5 = 0.90 (10% penalty)
   const ovrSurprise = 1 + ((avgOvr - player.playerOvr) / 10) * 0.5;
 
   const rawScore =
-    normWinRate * 0.35 +
-    normGoals * 0.30 +
-    normPPG * 0.20 +
+    normWinRate * 0.30 +
+    normGoals * 0.25 +
+    normDefence * 0.15 +
+    normPPG * 0.15 +
     activity * 0.15;
 
   return rawScore * ovrSurprise;
@@ -215,8 +221,9 @@ function calculatePotmScore(
  * Higher score = worse performance = more likely to "win" the award.
  *
  * Weights:
- *   Loss Rate:              35% - Primary measure of failure
- *   Goals Conceded/Match:   30% - Defensive liability
+ *   Loss Rate:              25% - Primary measure of failure
+ *   Goals Conceded/Match:   25% - Defensive liability
+ *   Goals Scored/Match:     15% - Lack of offensive contribution (inverted - fewer = worse)
  *   Demerit Points/Game:    20% - Inverse of PPG (L=3, D=1, W=0)
  *   Activity:               15% - Must have played enough to earn it
  *
@@ -230,6 +237,7 @@ function calculateDotmScore(
 ): number {
   const maxLossRate = Math.max(...allStats.map((s) => s.lossRate), 0.01);
   const maxConcededPM = Math.max(...allStats.map((s) => s.goalsConcededPerMatch), 0.01);
+  const maxGoalsPM = Math.max(...allStats.map((s) => s.goalsPerMatch), 0.01);
   const maxMatches = Math.max(...allStats.map((s) => s.matchesPlayed), 1);
   const avgOvr = allStats.reduce((sum, s) => sum + s.playerOvr, 0) / allStats.length;
 
@@ -244,15 +252,17 @@ function calculateDotmScore(
   const normConceded = player.goalsConcededPerMatch / maxConcededPM;
   const normDemerit = demeritPPG / maxDemeritPPG;
   const activity = player.matchesPlayed / maxMatches;
+  // Inverted: fewer goals scored = higher dud score (1.0 = worst attacker, 0.0 = best)
+  const normLackOfGoals = maxGoalsPM > 0
+    ? 1 - (player.goalsPerMatch / maxGoalsPM)
+    : 0;
 
-  // OVR shame: higher OVR doing badly is more shameful
-  // Scale: OVR 9 with avgOvr 7 → 1 + (9-7)/10*0.5 = 1.10 (10% boost to dud score)
-  // Scale: OVR 5 with avgOvr 7 → 1 + (5-7)/10*0.5 = 0.90 (10% reduction)
   const ovrShame = 1 + ((player.playerOvr - avgOvr) / 10) * 0.5;
 
   const rawScore =
-    normLossRate * 0.35 +
-    normConceded * 0.30 +
+    normLossRate * 0.25 +
+    normConceded * 0.25 +
+    normLackOfGoals * 0.15 +
     normDemerit * 0.20 +
     activity * 0.15;
 
@@ -260,7 +270,19 @@ function calculateDotmScore(
 }
 
 /**
- * Calculate all monthly awards across all available months.
+ * Get the current month key (YYYY-MM) to exclude incomplete months.
+ */
+function getCurrentMonthKey(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+}
+
+/**
+ * Calculate all monthly awards across all completed months.
+ * Only completed months are eligible (current month is excluded).
+ * No player can win the same award in consecutive months.
  * Returns the full award history plus the latest POTM and DOTM.
  */
 export function calculateMonthlyAwards(
@@ -271,28 +293,36 @@ export function calculateMonthlyAwards(
   const awards: MonthlyAward[] = [];
   const potmCounts = new Map<string, number>();
   const dotmCounts = new Map<string, number>();
+  const currentMonthKey = getCurrentMonthKey();
 
-  // Sort months chronologically
-  const sortedMonths = Array.from(monthlyStats.keys()).sort();
+  // Sort months chronologically, exclude current (incomplete) month
+  const sortedMonths = Array.from(monthlyStats.keys())
+    .filter((key) => key < currentMonthKey)
+    .sort();
+
+  // Track previous month's winners to prevent back-to-back
+  let previousPotmId: string | null = null;
+  let previousDotmId: string | null = null;
 
   for (const monthKey of sortedMonths) {
     const stats = monthlyStats.get(monthKey)!;
 
-    // Calculate POTM
+    // Calculate POTM - skip previous month's winner
     let bestPotm: { player: MonthlyPlayerStats; score: number } | null = null;
     for (const playerStats of stats) {
+      if (playerStats.playerId === previousPotmId) continue;
       const score = calculatePotmScore(playerStats, stats);
       if (!bestPotm || score > bestPotm.score) {
         bestPotm = { player: playerStats, score };
       }
     }
 
-    // Calculate DOTM - only award if at least one player has losses
+    // Calculate DOTM - skip previous month's winner, only if someone has losses
     let bestDotm: { player: MonthlyPlayerStats; score: number } | null = null;
-    const hasAnyLosses = stats.some((s) => s.losses > 0);
+    const hasAnyLosses = stats.some((s) => s.losses > 0 && s.playerId !== previousDotmId);
     if (hasAnyLosses) {
       for (const playerStats of stats) {
-        // Only consider players who actually lost at least one match
+        if (playerStats.playerId === previousDotmId) continue;
         if (playerStats.losses === 0) continue;
         const score = calculateDotmScore(playerStats, stats);
         if (!bestDotm || score > bestDotm.score) {
@@ -314,6 +344,9 @@ export function calculateMonthlyAwards(
       };
       awards.push(award);
       potmCounts.set(award.playerId, (potmCounts.get(award.playerId) || 0) + 1);
+      previousPotmId = award.playerId;
+    } else {
+      previousPotmId = null;
     }
 
     if (bestDotm) {
@@ -329,10 +362,13 @@ export function calculateMonthlyAwards(
       };
       awards.push(award);
       dotmCounts.set(award.playerId, (dotmCounts.get(award.playerId) || 0) + 1);
+      previousDotmId = award.playerId;
+    } else {
+      previousDotmId = null;
     }
   }
 
-  // Find latest awards
+  // Find latest awards (from completed months only)
   const potmAwards = awards.filter((a) => a.type === 'potm');
   const dotmAwards = awards.filter((a) => a.type === 'dotm');
   const latestPotm = potmAwards.length > 0 ? potmAwards[potmAwards.length - 1] : null;

@@ -397,6 +397,8 @@ function AwardsHistory({ awards, potmCounts, dotmCounts }: {
                     <th>Month</th>
                     <th>Winner</th>
                     <th>Record</th>
+                    <th>GF</th>
+                    <th>GA</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -419,6 +421,8 @@ function AwardsHistory({ awards, potmCounts, dotmCounts }: {
                         <span className="award-stat">{award.stats.draws}D</span>
                         <span className="award-stat">{award.stats.losses}L</span>
                       </td>
+                      <td className="awards-history-goals award-stat-good">{award.stats.goals}</td>
+                      <td className="awards-history-goals">{award.stats.goalsConceded}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -466,6 +470,8 @@ function AwardsHistory({ awards, potmCounts, dotmCounts }: {
                     <th>Month</th>
                     <th>Winner</th>
                     <th>Record</th>
+                    <th>GF</th>
+                    <th>GA</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -488,6 +494,8 @@ function AwardsHistory({ awards, potmCounts, dotmCounts }: {
                         <span className="award-stat">{award.stats.draws}D</span>
                         <span className="award-stat">{award.stats.wins}W</span>
                       </td>
+                      <td className="awards-history-goals">{award.stats.goals}</td>
+                      <td className="awards-history-goals award-stat-bad">{award.stats.goalsConceded}</td>
                     </tr>
                   ))}
                 </tbody>
