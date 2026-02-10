@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { calculatePlayerStats } from '../services/firebase';
@@ -220,6 +220,10 @@ export function Stats() {
             </div>
           )}
 
+          {monthlyAwardsResult.awards.length > 0 && (
+            <AwardsHistory awards={monthlyAwardsResult.awards} potmCounts={monthlyAwardsResult.potmCounts} dotmCounts={monthlyAwardsResult.dotmCounts} />
+          )}
+
           <div className="stats-table-container">
             <table className="stats-table">
               <thead>
@@ -309,6 +313,188 @@ export function Stats() {
             * Goals may be inaccurate as they are optionally recorded
           </p>
         </>
+      )}
+    </div>
+  );
+}
+
+function AwardsHistory({ awards, potmCounts, dotmCounts }: {
+  awards: MonthlyAward[];
+  potmCounts: Map<string, number>;
+  dotmCounts: Map<string, number>;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  const potmAwards = awards.filter((a) => a.type === 'potm').reverse();
+  const dotmAwards = awards.filter((a) => a.type === 'dotm').reverse();
+
+  // Build leaderboard: unique players sorted by award count
+  const potmLeaderboard = Array.from(potmCounts.entries())
+    .map(([id, count]) => {
+      const award = potmAwards.find((a) => a.playerId === id)!;
+      return { playerId: id, playerName: award.playerName, photoUrl: award.photoUrl, count };
+    })
+    .sort((a, b) => b.count - a.count);
+
+  const dotmLeaderboard = Array.from(dotmCounts.entries())
+    .map(([id, count]) => {
+      const award = dotmAwards.find((a) => a.playerId === id)!;
+      return { playerId: id, playerName: award.playerName, photoUrl: award.photoUrl, count };
+    })
+    .sort((a, b) => b.count - a.count);
+
+  return (
+    <div className="awards-history-section">
+      <button
+        className="awards-history-toggle"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <span>Awards History</span>
+        <span className="awards-history-chevron">{expanded ? '▲' : '▼'}</span>
+      </button>
+
+      {expanded && (
+        <div className="awards-history-content">
+          <div className="awards-history-grid">
+            {/* POTM History */}
+            <div className="awards-history-column">
+              <h3 className="awards-history-heading awards-history-potm-heading">
+                🌟 Player of the Month
+              </h3>
+              {potmLeaderboard.length > 0 && (
+                <table className="awards-history-leaderboard">
+                  <thead>
+                    <tr>
+                      <th>Player</th>
+                      <th>Awards</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {potmLeaderboard.map((entry) => (
+                      <tr key={entry.playerId}>
+                        <td>
+                          <Link to={`/player/${createPlayerSlug(entry.playerName)}`} className="awards-history-player">
+                            <img
+                              src={entry.photoUrl ? getCloudinaryImageUrl(entry.photoUrl) : placeholder}
+                              alt={entry.playerName}
+                              className="awards-history-photo"
+                              onError={(e) => { (e.target as HTMLImageElement).src = placeholder; }}
+                            />
+                            {entry.playerName}
+                          </Link>
+                        </td>
+                        <td className="awards-history-count">
+                          {'🌟'.repeat(Math.min(entry.count, 5))}{entry.count > 5 ? ` (${entry.count})` : ''}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              <table className="awards-history-table">
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Winner</th>
+                    <th>Record</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {potmAwards.map((award) => (
+                    <tr key={award.month}>
+                      <td className="awards-history-month">{award.monthLabel}</td>
+                      <td>
+                        <Link to={`/player/${createPlayerSlug(award.playerName)}`} className="awards-history-player">
+                          <img
+                            src={award.photoUrl ? getCloudinaryImageUrl(award.photoUrl) : placeholder}
+                            alt={award.playerName}
+                            className="awards-history-photo"
+                            onError={(e) => { (e.target as HTMLImageElement).src = placeholder; }}
+                          />
+                          {award.playerName}
+                        </Link>
+                      </td>
+                      <td className="awards-history-record">
+                        <span className="award-stat award-stat-good">{award.stats.wins}W</span>
+                        <span className="award-stat">{award.stats.draws}D</span>
+                        <span className="award-stat">{award.stats.losses}L</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* DOTM History */}
+            <div className="awards-history-column">
+              <h3 className="awards-history-heading awards-history-dotm-heading">
+                🤡 Dud of the Month
+              </h3>
+              {dotmLeaderboard.length > 0 && (
+                <table className="awards-history-leaderboard">
+                  <thead>
+                    <tr>
+                      <th>Player</th>
+                      <th>Awards</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dotmLeaderboard.map((entry) => (
+                      <tr key={entry.playerId}>
+                        <td>
+                          <Link to={`/player/${createPlayerSlug(entry.playerName)}`} className="awards-history-player">
+                            <img
+                              src={entry.photoUrl ? getCloudinaryImageUrl(entry.photoUrl) : placeholder}
+                              alt={entry.playerName}
+                              className="awards-history-photo"
+                              onError={(e) => { (e.target as HTMLImageElement).src = placeholder; }}
+                            />
+                            {entry.playerName}
+                          </Link>
+                        </td>
+                        <td className="awards-history-count">
+                          {'🤡'.repeat(Math.min(entry.count, 5))}{entry.count > 5 ? ` (${entry.count})` : ''}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              <table className="awards-history-table">
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Winner</th>
+                    <th>Record</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dotmAwards.map((award) => (
+                    <tr key={award.month}>
+                      <td className="awards-history-month">{award.monthLabel}</td>
+                      <td>
+                        <Link to={`/player/${createPlayerSlug(award.playerName)}`} className="awards-history-player">
+                          <img
+                            src={award.photoUrl ? getCloudinaryImageUrl(award.photoUrl) : placeholder}
+                            alt={award.playerName}
+                            className="awards-history-photo"
+                            onError={(e) => { (e.target as HTMLImageElement).src = placeholder; }}
+                          />
+                          {award.playerName}
+                        </Link>
+                      </td>
+                      <td className="awards-history-record">
+                        <span className="award-stat award-stat-bad">{award.stats.losses}L</span>
+                        <span className="award-stat">{award.stats.draws}D</span>
+                        <span className="award-stat">{award.stats.wins}W</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
