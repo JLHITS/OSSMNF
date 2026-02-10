@@ -1539,6 +1539,32 @@ h1, h2, h3 {
   background: rgba(248, 113, 113, 0.12);
 }
 
+.award-card-goals {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.award-card-goal-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.award-card-goal-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6b7280;
+}
+
+.award-card-goal-value {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #d1d5db;
+}
+
 .award-card-count {
   font-size: 0.7rem;
   color: #9ca3af;

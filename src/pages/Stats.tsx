@@ -173,16 +173,28 @@ export function Stats() {
                   <span className="award-stat award-stat-good">{award.stats.wins}W</span>
                   <span className="award-stat">{award.stats.draws}D</span>
                   <span className="award-stat">{award.stats.losses}L</span>
-                  <span className="award-stat award-stat-good">{award.stats.goals} goals</span>
                 </>
               ) : (
                 <>
                   <span className="award-stat award-stat-bad">{award.stats.losses}L</span>
                   <span className="award-stat">{award.stats.draws}D</span>
                   <span className="award-stat">{award.stats.wins}W</span>
-                  <span className="award-stat award-stat-bad">{award.stats.goalsConceded} conceded</span>
                 </>
               )}
+            </div>
+            <div className="award-card-goals">
+              <span className="award-card-goal-item" title="Personal goals scored">
+                <span className="award-card-goal-label">GS</span>
+                <span className={`award-card-goal-value ${isPotm ? 'award-stat-good' : ''}`}>{award.stats.goals}</span>
+              </span>
+              <span className="award-card-goal-item" title="Team goals for">
+                <span className="award-card-goal-label">GF</span>
+                <span className="award-card-goal-value">{award.stats.teamGoalsFor}</span>
+              </span>
+              <span className="award-card-goal-item" title="Team goals against">
+                <span className="award-card-goal-label">GA</span>
+                <span className={`award-card-goal-value ${!isPotm ? 'award-stat-bad' : ''}`}>{award.stats.goalsConceded}</span>
+              </span>
             </div>
             {totalCount > 1 && (
               <span className="award-card-count">
@@ -397,6 +409,7 @@ function AwardsHistory({ awards, potmCounts, dotmCounts }: {
                     <th>Month</th>
                     <th>Winner</th>
                     <th>Record</th>
+                    <th>GS</th>
                     <th>GF</th>
                     <th>GA</th>
                   </tr>
@@ -422,6 +435,7 @@ function AwardsHistory({ awards, potmCounts, dotmCounts }: {
                         <span className="award-stat">{award.stats.losses}L</span>
                       </td>
                       <td className="awards-history-goals award-stat-good">{award.stats.goals}</td>
+                      <td className="awards-history-goals">{award.stats.teamGoalsFor}</td>
                       <td className="awards-history-goals">{award.stats.goalsConceded}</td>
                     </tr>
                   ))}
@@ -470,6 +484,7 @@ function AwardsHistory({ awards, potmCounts, dotmCounts }: {
                     <th>Month</th>
                     <th>Winner</th>
                     <th>Record</th>
+                    <th>GS</th>
                     <th>GF</th>
                     <th>GA</th>
                   </tr>
@@ -495,6 +510,7 @@ function AwardsHistory({ awards, potmCounts, dotmCounts }: {
                         <span className="award-stat">{award.stats.wins}W</span>
                       </td>
                       <td className="awards-history-goals">{award.stats.goals}</td>
+                      <td className="awards-history-goals">{award.stats.teamGoalsFor}</td>
                       <td className="awards-history-goals award-stat-bad">{award.stats.goalsConceded}</td>
                     </tr>
                   ))}

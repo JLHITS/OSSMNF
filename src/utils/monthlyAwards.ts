@@ -8,8 +8,9 @@ export interface MonthlyPlayerStats {
   wins: number;
   losses: number;
   draws: number;
-  goals: number;
-  goalsConceded: number;
+  goals: number;           // Personal goals scored
+  teamGoalsFor: number;    // Team goals for (own team's score)
+  goalsConceded: number;   // Team goals against (opponent's score)
   matchesPlayed: number;
   winRate: number;
   lossRate: number;
@@ -82,7 +83,7 @@ function calculateMonthlyStats(
   for (const [monthKey, monthMatches] of monthlyMatches) {
     const playerStatsMap = new Map<string, {
       wins: number; losses: number; draws: number;
-      goals: number; goalsConceded: number; matchesPlayed: number;
+      goals: number; teamGoalsFor: number; goalsConceded: number; matchesPlayed: number;
     }>();
 
     for (const match of monthMatches) {
@@ -93,9 +94,10 @@ function calculateMonthlyStats(
       // Process red team
       for (const p of match.redTeam) {
         const s = playerStatsMap.get(p.id) || {
-          wins: 0, losses: 0, draws: 0, goals: 0, goalsConceded: 0, matchesPlayed: 0,
+          wins: 0, losses: 0, draws: 0, goals: 0, teamGoalsFor: 0, goalsConceded: 0, matchesPlayed: 0,
         };
         s.matchesPlayed++;
+        s.teamGoalsFor += match.redScore!;
         s.goalsConceded += match.whiteScore!;
         if (redWon) s.wins++;
         else if (whiteWon) s.losses++;
@@ -106,9 +108,10 @@ function calculateMonthlyStats(
       // Process white team
       for (const p of match.whiteTeam) {
         const s = playerStatsMap.get(p.id) || {
-          wins: 0, losses: 0, draws: 0, goals: 0, goalsConceded: 0, matchesPlayed: 0,
+          wins: 0, losses: 0, draws: 0, goals: 0, teamGoalsFor: 0, goalsConceded: 0, matchesPlayed: 0,
         };
         s.matchesPlayed++;
+        s.teamGoalsFor += match.whiteScore!;
         s.goalsConceded += match.redScore!;
         if (whiteWon) s.wins++;
         else if (redWon) s.losses++;
@@ -143,6 +146,7 @@ function calculateMonthlyStats(
         losses: s.losses,
         draws: s.draws,
         goals: s.goals,
+        teamGoalsFor: s.teamGoalsFor,
         goalsConceded: s.goalsConceded,
         matchesPlayed: s.matchesPlayed,
         winRate: s.wins / s.matchesPlayed,
