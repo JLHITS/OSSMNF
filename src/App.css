@@ -1272,8 +1272,9 @@ h1, h2, h3 {
 .stats-table-container {
   background: var(--bg-white);
   border-radius: 12px;
-  overflow: hidden;
+  overflow-x: auto;
   box-shadow: 0 2px 8px var(--shadow-light);
+  -webkit-overflow-scrolling: touch;
 }
 
 .stats-table {
@@ -2237,10 +2238,67 @@ h1, h2, h3 {
   cursor: help;
 }
 
-/* Mobile adjustments for form and badges */
+/* Mobile adjustments for stats table, form and badges */
 @media (max-width: 768px) {
+  .stats-page h1 {
+    font-size: 1.3rem;
+    margin-bottom: 16px;
+  }
+
+  .stats-summary {
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    margin-bottom: 12px;
+  }
+
+  .stats-table th {
+    padding: 10px 6px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+  }
+
+  .stats-table td {
+    padding: 8px 6px;
+    font-size: 0.8rem;
+  }
+
+  .rank-col {
+    width: 36px;
+    font-size: 1rem;
+  }
+
+  .player-col {
+    min-width: 120px;
+  }
+
+  .stats-photo {
+    width: 28px;
+    height: 28px;
+  }
+
+  .player-info {
+    gap: 6px;
+  }
+
+  .player-name-link {
+    font-size: 0.8rem;
+  }
+
+  .stat-col {
+    width: 32px;
+    font-size: 0.75rem;
+  }
+
+  .win-rate-col {
+    width: 48px;
+  }
+
+  .goals-col {
+    width: 40px;
+  }
+
   .form-col {
-    min-width: 100px;
+    min-width: 90px;
   }
 
   .form-indicator {
@@ -2249,9 +2307,14 @@ h1, h2, h3 {
     font-size: 0.6rem;
   }
 
+  .form-display {
+    gap: 2px;
+  }
+
   .streak-badge {
     font-size: 0.65rem;
     padding: 1px 4px;
+    margin-left: 3px;
   }
 
   .achievement-badge {
@@ -2260,6 +2323,11 @@ h1, h2, h3 {
 
   .badges-row {
     gap: 1px;
+  }
+
+  .stats-disclaimer {
+    font-size: 0.75rem;
+    margin-top: 10px;
   }
 }
 
