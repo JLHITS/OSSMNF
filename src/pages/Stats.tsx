@@ -4,6 +4,7 @@ import { useData } from '../context/DataContext';
 import { calculatePlayerStats } from '../services/firebase';
 import { calculatePlayerForm } from '../utils/calculations';
 import { calculatePlayerAchievements, type DynamicBadgeContext } from '../utils/achievements';
+import { calculateMonthlyAwards, type MonthlyAward } from '../utils/monthlyAwards';
 import { getCloudinaryImageUrl } from '../services/cloudinary';
 import { createPlayerSlug } from './PlayerProfile';
 import type { PlayerStats, Achievement } from '../types';
@@ -15,6 +16,11 @@ interface ExtendedPlayerStats extends PlayerStats {
 
 export function Stats() {
   const { players, matches } = useData();
+
+  // Calculate monthly awards
+  const monthlyAwardsResult = useMemo(() => {
+    return calculateMonthlyAwards(players, matches);
+  }, [players, matches]);
 
   const playerStats: ExtendedPlayerStats[] = useMemo(() => {
     const statsMap = calculatePlayerStats(players, matches);
@@ -66,11 +72,13 @@ export function Stats() {
     const topScorerGoals = Math.max(...baseStats.map(s => s.goals), 0);
     const topScorerId = baseStats.find(s => s.goals === topScorerGoals && s.goals > 0)?.playerId;
 
-    // Second pass: add achievements with dynamic context
+    // Second pass: add achievements with dynamic context (including monthly awards)
     return baseStats.map((stat, index) => {
       const dynamicContext: DynamicBadgeContext = {
         leaderboardPosition: index < 3 ? (index + 1) as 1 | 2 | 3 : undefined,
         isTopScorer: stat.playerId === topScorerId && topScorerGoals > 0,
+        potmCount: monthlyAwardsResult.potmCounts.get(stat.playerId) || 0,
+        dotmCount: monthlyAwardsResult.dotmCounts.get(stat.playerId) || 0,
       };
 
       const achievements = calculatePlayerAchievements(
@@ -88,7 +96,7 @@ export function Stats() {
         achievements,
       };
     });
-  }, [players, matches]);
+  }, [players, matches, monthlyAwardsResult]);
 
   const getRankBadge = (index: number) => {
     if (index === 0) return '🥇';
@@ -126,6 +134,67 @@ export function Stats() {
     return null;
   };
 
+  const renderAwardCard = (award: MonthlyAward, type: 'potm' | 'dotm') => {
+    const isPotm = type === 'potm';
+    const totalCount = isPotm
+      ? monthlyAwardsResult.potmCounts.get(award.playerId) || 1
+      : monthlyAwardsResult.dotmCounts.get(award.playerId) || 1;
+
+    return (
+      <div className={`award-card ${isPotm ? 'award-card-potm' : 'award-card-dotm'}`}>
+        <div className="award-card-header">
+          <span className="award-card-icon">{isPotm ? '🌟' : '🤡'}</span>
+          <span className="award-card-title">
+            {isPotm ? 'Player of the Month' : 'Dud of the Month'}
+          </span>
+        </div>
+        <div className="award-card-body">
+          <Link to={`/player/${createPlayerSlug(award.playerName)}`} className="award-card-link">
+            <img
+              src={award.photoUrl ? getCloudinaryImageUrl(award.photoUrl) : placeholder}
+              alt={award.playerName}
+              className="award-card-photo"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = placeholder;
+              }}
+            />
+          </Link>
+          <div className="award-card-info">
+            <Link
+              to={`/player/${createPlayerSlug(award.playerName)}`}
+              className="award-card-name"
+            >
+              {award.playerName}
+            </Link>
+            <span className="award-card-month">{award.monthLabel}</span>
+            <div className="award-card-stats">
+              {isPotm ? (
+                <>
+                  <span className="award-stat award-stat-good">{award.stats.wins}W</span>
+                  <span className="award-stat">{award.stats.draws}D</span>
+                  <span className="award-stat">{award.stats.losses}L</span>
+                  <span className="award-stat award-stat-good">{award.stats.goals} goals</span>
+                </>
+              ) : (
+                <>
+                  <span className="award-stat award-stat-bad">{award.stats.losses}L</span>
+                  <span className="award-stat">{award.stats.draws}D</span>
+                  <span className="award-stat">{award.stats.wins}W</span>
+                  <span className="award-stat award-stat-bad">{award.stats.goalsConceded} conceded</span>
+                </>
+              )}
+            </div>
+            {totalCount > 1 && (
+              <span className="award-card-count">
+                {isPotm ? '🌟' : '🤡'} x{totalCount} all time
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="stats-page">
       <h1>Player Statistics</h1>
@@ -143,6 +212,13 @@ export function Stats() {
               {matches.filter((m) => m.status === 'completed').length !== 1 ? 'es' : ''}
             </p>
           </div>
+
+          {(monthlyAwardsResult.latestPotm || monthlyAwardsResult.latestDotm) && (
+            <div className="monthly-awards-showcase">
+              {monthlyAwardsResult.latestPotm && renderAwardCard(monthlyAwardsResult.latestPotm, 'potm')}
+              {monthlyAwardsResult.latestDotm && renderAwardCard(monthlyAwardsResult.latestDotm, 'dotm')}
+            </div>
+          )}
 
           <div className="stats-table-container">
             <table className="stats-table">

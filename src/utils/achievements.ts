@@ -38,11 +38,17 @@ const BADGES: Achievement[] = [
   { id: 'current-2', name: 'Current #2', description: 'Currently 2nd on the leaderboard', icon: '🥈' },
   { id: 'current-3', name: 'Current #3', description: 'Currently 3rd on the leaderboard', icon: '🥉' },
   { id: 'top-scorer', name: 'Top Scorer', description: 'Current leading goalscorer', icon: '👟' },
+
+  // Monthly awards
+  { id: 'potm', name: 'Player of the Month', description: 'Awarded Player of the Month', icon: '🌟' },
+  { id: 'dotm', name: 'Dud of the Month', description: 'Awarded Dud of the Month', icon: '🤡' },
 ];
 
 export interface DynamicBadgeContext {
   leaderboardPosition?: number; // 1, 2, or 3 for top 3
   isTopScorer?: boolean;
+  potmCount?: number; // Number of POTM awards
+  dotmCount?: number; // Number of DOTM awards
 }
 
 export function calculatePlayerAchievements(
@@ -115,6 +121,12 @@ export function calculatePlayerAchievements(
     }
     if (dynamicContext.isTopScorer) {
       achievements.push(BADGES.find((b) => b.id === 'top-scorer')!);
+    }
+    if (dynamicContext.potmCount && dynamicContext.potmCount > 0) {
+      achievements.push(BADGES.find((b) => b.id === 'potm')!);
+    }
+    if (dynamicContext.dotmCount && dynamicContext.dotmCount > 0) {
+      achievements.push(BADGES.find((b) => b.id === 'dotm')!);
     }
   }
 
