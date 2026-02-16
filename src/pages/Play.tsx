@@ -351,8 +351,15 @@ export function Play() {
         newWhiteTeam = result.whiteTeam;
       }
 
-      setRedTeam(newRedTeam);
-      setWhiteTeam(newWhiteTeam);
+      // Jay prefers not wearing red - if he's on red, swap the teams
+      const jayOnRed = newRedTeam.some((p) => p.name.toLowerCase() === 'jay');
+      if (jayOnRed) {
+        setRedTeam(newWhiteTeam);
+        setWhiteTeam(newRedTeam);
+      } else {
+        setRedTeam(newRedTeam);
+        setWhiteTeam(newWhiteTeam);
+      }
       setTeamsGenerated(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate teams');
