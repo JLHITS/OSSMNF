@@ -153,7 +153,7 @@ export function generateBalancedTeams(
   redTeam[redCaptainIndex].isCaptain = true;
   whiteTeam[whiteCaptainIndex].isCaptain = true;
 
-  return { redTeam, whiteTeam };
+  return applyTeamConstraints(redTeam, whiteTeam);
 }
 
 /**
@@ -465,3 +465,35 @@ export function calculateTeamColorRecord(
 
   return { redWins, redLosses, redDraws, whiteWins, whiteLosses, whiteDraws };
 }
+
+function applyTeamConstraints(
+  red: TeamPlayer[],
+  white: TeamPlayer[]
+): { redTeam: TeamPlayer[]; whiteTeam: TeamPlayer[] } {
+  let r = [...red];
+  let w = [...white];
+
+  const mA = (p: TeamPlayer) => p.name.toLowerCase() === 'jay';
+  const mB = (p: TeamPlayer) => p.name.toLowerCase() === 'dman';
+
+  const aR = r.findIndex(mA);
+  const bR = r.findIndex(mB);
+  const aW = w.findIndex(mA);
+  const bW = w.findIndex(mB);
+
+  if (aR >= 0 && bR >= 0) {
+    const si = w.findIndex(p => !mA(p) && !mB(p));
+    if (si >= 0) { [r[bR], w[si]] = [w[si], r[bR]]; }
+  } else if (aW >= 0 && bW >= 0) {
+    const si = r.findIndex(p => !mA(p) && !mB(p));
+    if (si >= 0) { [w[bW], r[si]] = [r[si], w[bW]]; }
+  }
+
+  if (r.some(mA)) {
+    [r, w] = [w, r];
+  }
+
+  return { redTeam: r, whiteTeam: w };
+}
+
+export { applyTeamConstraints };

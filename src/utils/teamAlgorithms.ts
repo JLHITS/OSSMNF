@@ -6,7 +6,7 @@ import type {
   FairnessMetrics,
   TeamGenerationResult,
 } from '../types';
-import { generateBalancedTeams } from './calculations';
+import { generateBalancedTeams, applyTeamConstraints } from './calculations';
 
 // Default configuration for algorithms
 const DEFAULT_CONFIG: Required<AlgorithmConfig> = {
@@ -212,9 +212,11 @@ export function generateConstraintOptimizedTeams(
   // Assign random captains
   assignRandomCaptains(bestRed, bestWhite);
 
+  const adjusted = applyTeamConstraints(bestRed, bestWhite);
+
   return {
-    redTeam: bestRed,
-    whiteTeam: bestWhite,
+    redTeam: adjusted.redTeam,
+    whiteTeam: adjusted.whiteTeam,
     metadata: {
       algorithm: 'constraint-opt',
       fairnessScore: bestScore,
