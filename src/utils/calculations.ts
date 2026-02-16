@@ -490,7 +490,11 @@ function applyTeamConstraints(
   }
 
   if (r.some(mA)) {
-    [r, w] = [w, r];
+    const rOvr = r.reduce((s, p) => s + p.ovr, 0);
+    const wOvr = w.reduce((s, p) => s + p.ovr, 0);
+    if (wOvr >= rOvr) {
+      [r, w] = [w, r];
+    }
   }
 
   return { redTeam: r, whiteTeam: w };
