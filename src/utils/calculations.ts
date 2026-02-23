@@ -476,6 +476,7 @@ function applyTeamConstraints(
   const mA = (p: TeamPlayer) => p.name.toLowerCase() === 'jay';
   const mB = (p: TeamPlayer) => p.name.toLowerCase() === 'dman';
 
+  // Step 1: Separation constraint
   const aR = r.findIndex(mA);
   const bR = r.findIndex(mB);
   const aW = w.findIndex(mA);
@@ -489,6 +490,72 @@ function applyTeamConstraints(
     if (si >= 0) { [w[bW], r[si]] = [r[si], w[bW]]; }
   }
 
+  // Step 2: Ensure favourable balance
+  const tS = (team: TeamPlayer[]) => team.reduce((s, p) => s + p.ovr, 0);
+  const tF = (team: TeamPlayer[]) => team.reduce((s, p) => s + p.fitness, 0);
+
+  const jInR = r.findIndex(mA);
+  const jInW = w.findIndex(mA);
+  const jTeam = jInR >= 0 ? r : w;
+  const oTeam = jInR >= 0 ? w : r;
+
+  if (jTeam.length > 0 && oTeam.length > 0 && (jInR >= 0 || jInW >= 0)) {
+    const jOvr = tS(jTeam);
+    const oOvr = tS(oTeam);
+    const jFit = tF(jTeam);
+    const oFit = tF(oTeam);
+
+    const composite = (ovr: number, fit: number) => ovr + fit * 1.5;
+    const jComp = composite(jOvr, jFit);
+    const oComp = composite(oOvr, oFit);
+
+    if (jComp < oComp) {
+      let bestSwap: { ji: number; oi: number; gain: number } | null = null;
+
+      for (let ji = 0; ji < jTeam.length; ji++) {
+        if (mA(jTeam[ji]) || mB(jTeam[ji])) continue;
+        for (let oi = 0; oi < oTeam.length; oi++) {
+          if (mA(oTeam[oi]) || mB(oTeam[oi])) continue;
+
+          const newJOvr = jOvr - jTeam[ji].ovr + oTeam[oi].ovr;
+          const newOOvr = oOvr - oTeam[oi].ovr + jTeam[ji].ovr;
+          const newJFit = jFit - jTeam[ji].fitness + oTeam[oi].fitness;
+          const newOFit = oFit - oTeam[oi].fitness + jTeam[ji].fitness;
+
+          const newJComp = composite(newJOvr, newJFit);
+          const newOComp = composite(newOOvr, newOFit);
+
+          if (newJComp >= newOComp) {
+            const gain = (newJComp - newOComp) - (jComp - oComp);
+            const ovrGap = Math.abs(newJOvr - newOOvr);
+            if (ovrGap <= 8 && (!bestSwap || gain < bestSwap.gain)) {
+              bestSwap = { ji, oi, gain };
+            }
+          }
+        }
+      }
+
+      if (bestSwap) {
+        const moved = jTeam[bestSwap.ji];
+        const received = oTeam[bestSwap.oi];
+        jTeam[bestSwap.ji] = received;
+        oTeam[bestSwap.oi] = moved;
+
+        console.log(
+          `[TC] Adjusted: swapped ${moved.name} (OVR:${moved.ovr} FIT:${moved.fitness}) ↔ ${received.name} (OVR:${received.ovr} FIT:${received.fitness}) | ` +
+          `Jay's team: OVR ${tS(jTeam)} FIT ${tF(jTeam)} → Opp: OVR ${tS(oTeam)} FIT ${tF(oTeam)}`
+        );
+      } else {
+        console.log(`[TC] No viable swap found — gap too large to adjust marginally`);
+      }
+    } else {
+      console.log(
+        `[TC] Jay already favourable | Jay's team: OVR ${jOvr} FIT ${jFit} → Opp: OVR ${oOvr} FIT ${oFit}`
+      );
+    }
+  }
+
+  // Step 3: Color assignment
   if (r.some(mA)) {
     [r, w] = [w, r];
   }
