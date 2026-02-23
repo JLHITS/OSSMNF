@@ -42,7 +42,7 @@ const saveTeamsToStorage = (redTeam: TeamPlayer[], whiteTeam: TeamPlayer[], matc
 };
 
 export function Play() {
-  const { players, matches, availability, refreshMatches, updateAvailability, refreshPlayers } = useData();
+  const { players, matches, availability, loading, refreshMatches, updateAvailability, refreshPlayers } = useData();
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<Set<string>>(new Set());
 
   // Initialize from localStorage
@@ -222,7 +222,11 @@ export function Play() {
   };
 
   // Initialize availability for all players if not set
+  // IMPORTANT: Only run after data has finished loading to avoid overwriting
+  // existing availability with defaults during the initial fetch
   useEffect(() => {
+    if (loading) return;
+
     const initializeAvailability = async () => {
       const playersWithoutAvailability = activePlayers.filter((p) => !availability.has(p.id));
 
@@ -249,7 +253,7 @@ export function Play() {
     if (activePlayers.length > 0) {
       initializeAvailability();
     }
-  }, [activePlayers, availability, updateAvailability]);
+  }, [loading, activePlayers, availability, updateAvailability]);
 
   // Reset all availability
   const handleResetAvailability = async () => {
