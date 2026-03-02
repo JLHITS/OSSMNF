@@ -7,6 +7,7 @@ import { Play } from './pages/Play';
 import { Results } from './pages/Results';
 import { Stats } from './pages/Stats';
 import { Configuration } from './pages/Configuration';
+import { Logs } from './pages/Logs';
 import { PlayerProfile } from './pages/PlayerProfile';
 import './App.css';
 
@@ -15,6 +16,16 @@ function ProtectedOutlet() {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  return <Outlet />;
+}
+
+function AdminOutlet() {
+  const { isAuthenticated, isAdmin } = useAuth();
+
+  if (!isAuthenticated || !isAdmin) {
+    return <Navigate to="/play" replace />;
   }
 
   return <Outlet />;
@@ -51,6 +62,9 @@ function AppRoutes() {
           <Route path="play" element={<Play />} />
           <Route path="results" element={<Results />} />
           <Route path="config" element={<Configuration />} />
+        </Route>
+        <Route element={<AdminOutlet />}>
+          <Route path="logs" element={<Logs />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/play" replace />} />

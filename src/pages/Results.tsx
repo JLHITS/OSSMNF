@@ -1,7 +1,7 @@
 import { useState, type Dispatch, type SetStateAction } from 'react';
 import { useData } from '../context/DataContext';
 import type { Match } from '../types';
-import { updateMatch, deleteMatch } from '../services/firebase';
+import { updateMatch, deleteMatch, logActivity } from '../services/firebase';
 import { getCloudinaryImageUrl } from '../services/cloudinary';
 import { Alert, Confirm } from '../components/Modal';
 import placeholder from '../assets/placeholder.png';
@@ -55,6 +55,8 @@ export function Results() {
         status: redScore !== null && whiteScore !== null ? 'completed' : 'pending',
       });
       await refreshMatches();
+      const dateStr = formatDate(newDate);
+      logActivity('RESULT_SAVED', `Saved result: Red ${redScore ?? '-'} - ${whiteScore ?? '-'} White (${dateStr})`);
       cancelEditing();
     } catch (err) {
       console.error('Error saving result:', err);
@@ -70,8 +72,10 @@ export function Results() {
     if (!confirmDelete) return;
 
     try {
+      const matchToDelete = matches.find(m => m.id === confirmDelete);
       await deleteMatch(confirmDelete);
       await refreshMatches();
+      logActivity('MATCH_DELETED', `Deleted match${matchToDelete ? ` from ${formatDate(matchToDelete.date)}` : ''}`);
     } catch (err) {
       console.error('Error deleting match:', err);
       setAlertMessage({ message: 'Failed to delete match', type: 'error' });

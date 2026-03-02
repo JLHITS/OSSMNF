@@ -1,7 +1,7 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useData } from '../context/DataContext';
 import type { Player, Position } from '../types';
-import { createPlayer, updatePlayer, deletePlayer } from '../services/firebase';
+import { createPlayer, updatePlayer, deletePlayer, logActivity } from '../services/firebase';
 import { uploadImageToCloudinary, getCloudinaryImageUrl } from '../services/cloudinary';
 import { calculateOVR } from '../utils/calculations';
 import { Alert, Confirm } from '../components/Modal';
@@ -121,6 +121,7 @@ export function Configuration() {
     try {
       await deletePlayer(confirmDelete.playerId);
       await refreshPlayers();
+      logActivity('PLAYER_DELETED', `Deleted player: ${confirmDelete.playerName}`);
     } catch (err) {
       console.error('Error deleting player:', err);
       setAlertMessage({ message: 'Failed to delete player', type: 'error' });
@@ -139,6 +140,7 @@ export function Configuration() {
     try {
       await updatePlayer(confirmArchive.playerId, { archived: true });
       await refreshPlayers();
+      logActivity('PLAYER_ARCHIVED', `Archived player: ${confirmArchive.playerName}`);
       resetForm();
       setAlertMessage({ message: `${confirmArchive.playerName} has been archived`, type: 'success' });
     } catch (err) {
@@ -153,6 +155,7 @@ export function Configuration() {
     try {
       await updatePlayer(player.id, { archived: false });
       await refreshPlayers();
+      logActivity('PLAYER_UNARCHIVED', `Unarchived player: ${player.name}`);
       setAlertMessage({ message: `${player.name} has been unarchived`, type: 'success' });
     } catch (err) {
       console.error('Error unarchiving player:', err);
@@ -203,8 +206,10 @@ export function Configuration() {
 
       if (editingPlayerId) {
         await updatePlayer(editingPlayerId, playerData);
+        logActivity('PLAYER_UPDATED', `Updated player: ${playerData.name} (${playerData.position}, OVR ${calculatedOVR})`);
       } else {
         await createPlayer(playerData);
+        logActivity('PLAYER_CREATED', `Created player: ${playerData.name} (${playerData.position}, OVR ${calculatedOVR})`);
       }
 
       await refreshPlayers();

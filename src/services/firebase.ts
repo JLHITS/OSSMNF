@@ -17,13 +17,16 @@ import {
   deleteObject,
 } from 'firebase/storage';
 import { db, storage } from '../config/firebase';
-import type { Player, Match, TeamPlayer, PlayerAvailability, AvailabilityStatus } from '../types';
+import { limit as firestoreLimit } from 'firebase/firestore';
+import type { Player, Match, TeamPlayer, PlayerAvailability, AvailabilityStatus, ActivityLog } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { getClientIp } from './ipAddress';
 
 // Collections
 const PLAYERS_COLLECTION = 'players';
 const MATCHES_COLLECTION = 'matches';
 const AVAILABILITY_COLLECTION = 'availability';
+const ACTIVITY_LOGS_COLLECTION = 'activity_logs';
 
 export async function getPlayers(): Promise<Player[]> {
   const q = query(collection(db, PLAYERS_COLLECTION), orderBy('name'));
@@ -309,4 +312,38 @@ export async function resetAllAvailability(): Promise<void> {
   });
 
   await batch.commit();
+}
+
+// Activity Logging
+export async function logActivity(action: string, details: string): Promise<void> {
+  try {
+    const ipAddress = await getClientIp();
+    await addDoc(collection(db, ACTIVITY_LOGS_COLLECTION), {
+      action,
+      details,
+      timestamp: Timestamp.now(),
+      ipAddress,
+    });
+  } catch (error) {
+    console.error('Error logging activity:', error);
+  }
+}
+
+export async function getActivityLogs(limitCount: number = 100): Promise<ActivityLog[]> {
+  const q = query(
+    collection(db, ACTIVITY_LOGS_COLLECTION),
+    orderBy('timestamp', 'desc'),
+    firestoreLimit(limitCount)
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((docSnapshot) => {
+    const data = docSnapshot.data();
+    return {
+      id: docSnapshot.id,
+      action: data.action,
+      details: data.details,
+      timestamp: data.timestamp?.toDate() || new Date(),
+      ipAddress: data.ipAddress || 'unknown',
+    } as ActivityLog;
+  });
 }

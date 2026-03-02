@@ -160,3 +160,11 @@ export interface TeamGenerationResult {
     timeMs?: number;
   };
 }
+
+export interface ActivityLog {
+  id: string;
+  action: string;
+  details: string;
+  timestamp: Date;
+  ipAddress: string;
+}

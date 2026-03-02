@@ -4,7 +4,7 @@ import logo from '../assets/logo.png';
 import { APP_VERSION } from '../version';
 
 export function Layout() {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, isAdmin, logout } = useAuth();
 
   return (
     <div className="app-layout">
@@ -23,6 +23,11 @@ export function Layout() {
           <NavLink to="/config" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
             Configuration
           </NavLink>
+          {isAdmin && (
+            <NavLink to="/logs" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+              Logs
+            </NavLink>
+          )}
         </nav>
         {isAuthenticated ? (
           <button onClick={logout} className="logout-button" data-emoji="👋">

@@ -7,7 +7,7 @@ import { LoadingOverlay } from '../components/LoadingOverlay';
 import type { TeamPlayer, MatchSize, Player, AvailabilityStatus, TeamGenerationAlgorithm } from '../types';
 import { generateBalancedTeams, getTeamSize, calculateTeamOVR } from '../utils/calculations';
 import { generateConstraintOptimizedTeams, generateILPOptimizedTeams } from '../utils/teamAlgorithms';
-import { createMatch, resetAllAvailability, updatePlayer } from '../services/firebase';
+import { createMatch, resetAllAvailability, updatePlayer, logActivity } from '../services/firebase';
 import { getCloudinaryImageUrl } from '../services/cloudinary';
 import placeholder from '../assets/placeholder.png';
 
@@ -153,6 +153,8 @@ export function Play() {
     }
 
     await updateAvailability([{ playerId, status: newStatus, reserveOrder: updatedReserveOrder }]);
+    const playerName = activePlayers.find(p => p.id === playerId)?.name || playerId;
+    logActivity('AVAILABILITY_CHANGED', `${playerName} set to ${newStatus}${updatedReserveOrder !== null ? ` (reserve #${updatedReserveOrder})` : ''}`);
   };
 
   // Reorder reserves after a player is promoted
@@ -259,6 +261,7 @@ export function Play() {
   const handleResetAvailability = async () => {
     try {
       await resetAllAvailability();
+      logActivity('AVAILABILITY_RESET', 'Reset all player availability to unconfirmed');
       setAlertMessage({ message: 'All availability reset to unconfirmed', type: 'success' });
     } catch (err) {
       console.error('Error resetting availability:', err);
@@ -287,6 +290,7 @@ export function Play() {
       }]);
 
       await refreshPlayers();
+      logActivity('PLAYER_UNARCHIVED', `Unarchived ${player.name} (added to reserves)`);
       setAlertMessage({ message: `${player.name} has been unarchived and added to reserves`, type: 'success' });
     } catch (err) {
       console.error('Error unarchiving player:', err);
@@ -358,6 +362,7 @@ export function Play() {
       setRedTeam(newRedTeam);
       setWhiteTeam(newWhiteTeam);
       setTeamsGenerated(true);
+      logActivity('TEAMS_GENERATED', `Generated ${matchSize} teams using ${selectedAlgorithm} (${selectedPlayers.length} players)`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate teams');
     } finally {
@@ -368,12 +373,13 @@ export function Play() {
   const handleTeamsChange = (newRedTeam: TeamPlayer[], newWhiteTeam: TeamPlayer[]) => {
     setRedTeam(newRedTeam);
     setWhiteTeam(newWhiteTeam);
+    logActivity('TEAMS_TWEAKED', 'Manual player swap between teams');
   };
 
   const handleSwapTeams = () => {
-    // Swap the teams - red becomes white and vice versa
     setRedTeam(whiteTeam);
     setWhiteTeam(redTeam);
+    logActivity('TEAMS_SWAPPED', 'Swapped red and white teams');
   };
 
   const handleRedCaptainChange = (playerId: string) => {
@@ -411,6 +417,7 @@ export function Play() {
         status: 'pending',
       });
       await refreshMatches();
+      logActivity('MATCH_SAVED', `Saved ${matchSize} match (Red OVR: ${calculateTeamOVR(redTeam)} vs White OVR: ${calculateTeamOVR(whiteTeam)})`);
       setAlertMessage({ message: 'Match saved successfully!', type: 'success' });
     } catch (err) {
       console.error('Error saving match:', err);
